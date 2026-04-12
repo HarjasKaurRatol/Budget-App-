@@ -160,8 +160,9 @@ getDoc(FIRESTORE_DOC).then((snap) => {
   renderExpenses();
   updateSummary();
   showSaveStatus("Synced from cloud.");
-}).catch(() => {
-  // Firestore unavailable — local state already loaded, carry on
+}).catch((err) => {
+  console.error("Firestore load failed:", err);
+  showToast("Could not load cloud data: " + (err?.message ?? err), "info");
 });
 
 checkingInput.addEventListener("input", (event) => {
