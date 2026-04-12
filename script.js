@@ -145,13 +145,24 @@ updateSummary();
 getDoc(FIRESTORE_DOC).then((snap) => {
   if (!snap.exists()) return;
   const data = snap.data();
+  const firestoreExpenses = Array.isArray(data.expenses) ? data.expenses : [];
+  const localExpenses = state.expenses;
+
+  // Don't replace real local data with empty/fewer Firestore data.
+  // This prevents a stale or empty Firestore doc from wiping localStorage.
+  if (localExpenses.length > 0 && firestoreExpenses.length < localExpenses.length) {
+    showSaveStatus("Local data kept — cloud had less data. Click Save to sync.");
+    showToast("Cloud data had fewer entries than your local data. Your local data was kept.", "info");
+    return;
+  }
+
   Object.assign(state, {
     ...cloneDefaultState(),
     ...data,
     budgetCaps: normalizeBudgetCaps(data.budgetCaps),
     treatMode: TREAT_MODES[data.treatMode] ? data.treatMode : "Balanced",
     treatEnabled: data.treatEnabled !== false,
-    expenses: Array.isArray(data.expenses) ? data.expenses.map((e) => ({ ...e, category: normalizeCategory(e) })) : cloneDefaultState().expenses
+    expenses: firestoreExpenses.map((e) => ({ ...e, category: normalizeCategory(e) }))
   });
   lastManualSaveSnapshot = serializeState(state);
   hydrateInputs();
