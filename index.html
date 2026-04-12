@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Budget Snapshot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <nav class="side-nav" aria-label="Quick actions">
+      <button class="side-nav-item" data-nav-action="add-expense" type="button">Add</button>
+      <button class="side-nav-item" data-nav-target="purchaseSection" type="button">Planning</button>
+      <button class="side-nav-item" data-nav-target="accountsSection" type="button">Accounts</button>
+      <button class="side-nav-item" data-nav-target="expenseSheetSection" type="button">Sheet</button>
+      <button class="side-nav-item" data-nav-target="monthlySection" type="button">Monthly</button>
+        <button class="side-nav-item side-nav-icon" data-nav-action="save-data" type="button" aria-label="Save data" title="Save data">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 3h11l3 3v15H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M8 3v6h8V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M9 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-action="top" type="button" aria-label="Back to top" title="Back to top">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 18V6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M7.5 10.5 12 6l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </nav>
+
+    <div class="page-shell">
+      <header class="hero">
+        <section class="panel hero-visualization">
+          <div class="panel-heading">
+            <div>
+              <p class="section-tag">Visualization</p>
+              <h2>Spending by category</h2>
+              <p id="periodSummary" class="supporting-text period-summary">Viewing all periods</p>
+            </div>
+          </div>
+
+          <canvas id="expenseChart" width="720" height="280" aria-label="Expense chart"></canvas>
+          <div id="chartLegend" class="legend"></div>
+
+          <div class="stats-grid hero-stats">
+            <article class="stat-card">
+              <span>Total planned spending</span>
+              <strong id="totalExpenses">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Largest category</span>
+              <strong id="topCategory">No expenses yet</strong>
+            </article>
+            <article class="stat-card">
+              <span>Available after planned spending</span>
+              <strong id="safeToSpend">$0.00</strong>
+            </article>
+            <article class="stat-card accent-stat">
+              <span>Total money left</span>
+              <small class="stat-caption">After paying the credit card bills</small>
+              <strong id="visualTotalMoneyLeft">$0.00</strong>
+            </article>
+          </div>
+
+          <div class="hero-status">
+            <span id="healthLabel">Add balances and expenses to get started.</span>
+            <span id="saveStatus" class="save-status">Saved locally on this device.</span>
+          </div>
+        </section>
+      </header>
+
+      <main class="dashboard top-dashboard">
+        <section id="accountsSection" class="panel panel-accent balances-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-tag">Accounts</p>
+              <h2>Current balances</h2>
+            </div>
+          </div>
+
+          <form class="stack-form">
+            <label>
+              Checking account
+              <input id="checkingInput" name="checking" type="number" min="0" step="0.01" placeholder="0.00" />
+            </label>
+            <label>
+              Savings account
+              <input id="savingsInput" name="savings" type="number" min="0" step="0.01" placeholder="0.00" />
+            </label>
+            <label>
+              Chase payment left
+              <strong id="chaseCardTotal" class="derived-value">$0.00</strong>
+              <small id="chaseCardHelper" class="field-helper">Sheet charges: $0.00. Total Chase due: $0.00.</small>
+            </label>
+            <label>
+              Zolve payment left
+              <strong id="zolveCardTotal" class="derived-value">$0.00</strong>
+              <small id="zolveCardHelper" class="field-helper">Sheet charges: $0.00. Total Zolve due: $0.00.</small>
+            </label>
+          </form>
+
+          <div class="stats-grid accounts-stats">
+            <article class="stat-card">
+              <span>Total cash</span>
+              <strong id="totalCash">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Total money left</span>
+              <small class="stat-caption">After paying the credit card bills</small>
+              <strong id="totalMoneyLeft">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Planned out of checking</span>
+              <strong id="plannedFromChecking">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Total card payments left</span>
+              <strong id="totalCardPayments">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Checking after expenses and cards</span>
+              <strong id="checkingAfterCards">$0.00</strong>
+            </article>
+          </div>
+
+          <p class="supporting-text">
+            Use the rows below for bills, shopping, food, travel, subscriptions,
+            or any other expense category you want to watch.
+          </p>
+        </section>
+
+        <section id="expenseSheetSection" class="panel sheet-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-tag">Expense sheet</p>
+              <h2>Expenses with dropdown categories</h2>
+            </div>
+            <div class="sheet-actions">
+              <label class="period-filter">
+                <span>Period</span>
+                <select id="periodFilterInput" name="periodFilter"></select>
+              </label>
+              <button id="loadScriptDataButton" class="ghost-button" type="button">Load script data</button>
+              <button id="saveSheetDataButton" class="ghost-button" type="button">Save sheet data</button>
+              <button id="addExpenseButton" class="secondary-button" type="button">Add expense</button>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="expense-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Amount</th>
+                  <th>Category</th>
+                  <th>Paid from</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="expenseTableBody"></tbody>
+            </table>
+          </div>
+
+          <template id="expenseRowTemplate">
+            <tr>
+              <td><input data-field="date" type="date" /></td>
+              <td><input data-field="description" type="text" placeholder="Rent, Starbucks, Uber Eats..." /></td>
+              <td><input data-field="amount" type="number" min="0" step="0.01" placeholder="0.00" /></td>
+              <td>
+                <select data-field="category"></select>
+              </td>
+              <td>
+                <select data-field="source"></select>
+              </td>
+              <td><button class="ghost-button small-button" data-action="remove" type="button">Remove</button></td>
+            </tr>
+          </template>
+
+          <div class="stats-grid bottom-stats">
+            <article class="stat-card">
+              <span>Next upcoming bill</span>
+              <strong id="nextBill">No dated bills yet</strong>
+            </article>
+            <article class="stat-card">
+              <span>Checking left after expenses</span>
+              <strong id="checkingAfterExpenses">$0.00</strong>
+            </article>
+          </div>
+        </section>
+
+      </main>
+
+      <main class="dashboard secondary-dashboard">
+        <div class="lower-left-stack">
+          <section class="panel payments-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="section-tag">Card payments</p>
+                <h2>Transfers and payments</h2>
+              </div>
+              <button id="addPaymentEntryButton" class="secondary-button" type="button">Add entry</button>
+            </div>
+
+            <div class="table-wrap payment-wrap">
+              <table class="expense-table payment-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Card</th>
+                    <th>Amount</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="paymentTableBody"></tbody>
+              </table>
+            </div>
+
+            <template id="paymentRowTemplate">
+              <tr>
+                <td><input data-field="date" type="date" /></td>
+                <td><select data-field="type"></select></td>
+                <td><select data-field="card"></select></td>
+                <td><input data-field="amount" type="number" min="0" step="0.01" placeholder="0.00" /></td>
+                <td><button class="ghost-button small-button" data-action="remove" type="button">Remove</button></td>
+              </tr>
+            </template>
+
+            <div class="stats-grid compact-grid">
+              <article class="stat-card">
+                <span>Savings to checking planned</span>
+                <strong id="transferTotal">$0.00</strong>
+              </article>
+              <article class="stat-card">
+                <span>Card payments recorded</span>
+                <strong id="paymentsTotal">$0.00</strong>
+              </article>
+            </div>
+          </section>
+
+          <section id="purchaseSection" class="panel purchase-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="section-tag">Purchase planner</p>
+                <h2>Can I afford this?</h2>
+              </div>
+            </div>
+
+            <form class="stack-form">
+              <label>
+                What do you want to buy?
+                <input id="purchaseNameInput" name="purchaseName" type="text" placeholder="Weekend trip, shoes, headphones..." />
+              </label>
+              <label>
+                How much does it cost?
+                <input id="purchaseAmountInput" name="purchaseAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+              </label>
+            </form>
+
+            <div class="decision-card" id="decisionCard">
+              <p class="decision-label">After this purchase</p>
+              <strong id="afterPurchase">$0.00</strong>
+              <small id="purchaseImpactText" class="stat-caption">This amount is calculated from your total money left.</small>
+              <span id="decisionText">Enter an item above to compare it with your remaining money.</span>
+            </div>
+          </section>
+
+          <section class="panel treat-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="section-tag">Treat suggestion</p>
+                <h2>Reward without overspending</h2>
+              </div>
+            </div>
+
+            <form class="stack-form">
+              <label>
+                Treat mode
+                <select id="treatModeInput" name="treatMode">
+                  <option value="Conservative">Conservative</option>
+                  <option value="Balanced">Balanced</option>
+                  <option value="Flexible">Flexible</option>
+                </select>
+              </label>
+              <label class="toggle-label">
+                <span>Enable treat suggestions</span>
+                <input id="treatEnabledInput" name="treatEnabled" type="checkbox" />
+              </label>
+            </form>
+
+            <div class="stats-grid compact-grid">
+              <article class="stat-card accent-stat">
+                <span>Treat budget</span>
+                <small class="stat-caption">Built from money left after your $300 treat buffer.</small>
+                <strong id="treatBudget">$0.00</strong>
+              </article>
+              <article class="stat-card">
+                <span>Treat status</span>
+                <strong id="treatStatus">No treat today</strong>
+              </article>
+            </div>
+
+            <div class="decision-card" id="treatCard">
+              <p class="decision-label">Why this suggestion</p>
+              <span id="treatReason">Turn this on when you want disciplined treat guidance based on your current numbers.</span>
+              <small id="treatPurchaseFit" class="stat-caption">Enter something in Purchase planner to compare it with your treat budget.</small>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel planning-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-tag">Upcoming</p>
+              <h2>Salary and settlements</h2>
+            </div>
+          </div>
+
+          <form class="stack-form">
+            <label>
+              Upcoming salary amount
+              <input id="salaryAmountInput" name="salaryAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+            </label>
+            <label>
+              Salary date
+              <input id="salaryDateInput" name="salaryDate" type="date" />
+            </label>
+            <label>
+              Splitwise you owe
+              <input id="splitwiseOweAmountInput" name="splitwiseOweAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+            </label>
+            <label>
+              Owe date
+              <input id="splitwiseOweDateInput" name="splitwiseOweDate" type="date" />
+            </label>
+            <label>
+              Splitwise owed to you
+              <input id="splitwiseOwedAmountInput" name="splitwiseOwedAmount" type="number" min="0" step="0.01" placeholder="0.00" />
+            </label>
+            <label>
+              Owed date
+              <input id="splitwiseOwedDateInput" name="splitwiseOwedDate" type="date" />
+            </label>
+          </form>
+
+          <div class="stats-grid compact-grid">
+            <article class="stat-card">
+              <span>Salary incoming</span>
+              <strong id="incomingSoon">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Splitwise owed to you</span>
+              <strong id="splitwiseIncoming">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Splitwise you owe</span>
+              <strong id="settlementDue">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Projected after all</span>
+              <strong id="projectedAvailable">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Next cash-flow date</span>
+              <strong id="nextMoneyDate">No date yet</strong>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <section id="monthlySection" class="panel monthly-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-tag">Monthly view</p>
+            <h2>Daily spending</h2>
+            <p id="monthlyPeriodLabel" class="supporting-text period-summary">Viewing all periods</p>
+          </div>
+        </div>
+        <canvas id="dailyChart" width="720" height="320" aria-label="Daily spending chart"></canvas>
+        <div class="stats-grid monthly-stats">
+          <article class="stat-card">
+            <span>Total this period</span>
+            <strong id="monthlyTotal">$0.00</strong>
+          </article>
+          <article class="stat-card accent-stat">
+            <span>Highest day</span>
+            <strong id="monthlyPeak">—</strong>
+          </article>
+          <article class="stat-card">
+            <span>Daily average</span>
+            <strong id="monthlyAverage">$0.00</strong>
+          </article>
+          <article class="stat-card">
+            <span>Days with spending</span>
+            <strong id="monthlyActiveDays">0</strong>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <div id="toastNotification" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
