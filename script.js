@@ -239,11 +239,13 @@ addPaymentEntryButton.addEventListener("click", () => {
   scrollToNewestPaymentRow();
 });
 
-loadScriptDataButton.addEventListener("click", () => {
-  state.expenses = cloneDefaultState().expenses;
-  persistAndRefresh(true);
-  showSaveStatus("Expense sheet reloaded from script.js sample data.");
-});
+if (loadScriptDataButton) {
+  loadScriptDataButton.addEventListener("click", () => {
+    state.expenses = cloneDefaultState().expenses;
+    persistAndRefresh(true);
+    showSaveStatus("Expense sheet reloaded from script.js sample data.");
+  });
+}
 
 saveSheetDataButton.addEventListener("click", async () => {
   await saveCurrentSheetData();
