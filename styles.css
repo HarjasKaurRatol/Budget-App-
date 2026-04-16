@@ -61,7 +61,6 @@ body {
 }
 
 .side-nav-icon {
-  margin-top: auto;
   writing-mode: horizontal-tb;
   text-orientation: initial;
   transform: none;
@@ -70,6 +69,11 @@ body {
   padding: 14px 12px;
   font-size: 1.5rem;
   line-height: 1;
+}
+
+/* Push utility icons (calculator group) to bottom of nav */
+.side-nav-util-first {
+  margin-top: auto;
 }
 
 .side-nav-svg {
@@ -259,6 +263,7 @@ label {
   font-family: "Space Grotesk", sans-serif;
   font-size: 1.25rem;
   line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 
 input,
@@ -341,6 +346,7 @@ select:focus {
 .decision-card strong {
   font-family: "Space Grotesk", sans-serif;
   font-size: 1.45rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .accent-stat {
@@ -399,6 +405,7 @@ button {
 .ghost-button {
   background: rgba(0, 0, 0, 0.05);
   color: var(--ink);
+  border: 1px solid var(--line);
 }
 
 .small-button {
@@ -599,6 +606,155 @@ button {
   margin-top: 24px;
 }
 
+.fab-button {
+  display: none;
+}
+
+/* Calculator modal — floats in bottom-right corner, no overlay */
+.calc-modal {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 150;
+}
+
+.calc-modal.hidden {
+  display: none;
+}
+
+.calc-panel {
+  width: 100%;
+  max-width: 316px;
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  box-shadow: 0 32px 80px rgba(70, 34, 24, 0.22);
+  padding: 24px;
+}
+
+.calc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.calc-display {
+  background: rgba(247, 241, 231, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px 18px;
+  text-align: right;
+  margin-bottom: 16px;
+  min-height: 82px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.calc-expression {
+  font-size: 0.82rem;
+  color: var(--muted);
+  min-height: 1em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calc-value {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2.4rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.calc-keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 9px;
+}
+
+.calc-key {
+  border-radius: 14px;
+  height: 58px;
+  padding: 0;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 100ms ease;
+  user-select: none;
+}
+
+.calc-key:hover {
+  filter: brightness(0.95);
+}
+
+.calc-key:active {
+  filter: brightness(0.88);
+  transform: scale(0.95);
+}
+
+.calc-key-fn {
+  background: rgba(105, 93, 91, 0.13);
+}
+
+.calc-key-op {
+  background: rgba(201, 95, 55, 0.13);
+  color: var(--primary-deep);
+}
+
+.calc-key-op.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.calc-key-equals {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.calc-key-equals:hover {
+  filter: brightness(0.92);
+}
+
+.calc-key-zero {
+  grid-column: span 2;
+  justify-content: flex-start;
+  padding-left: 20px;
+}
+
+.toast-undo-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  margin-left: 6px;
+  opacity: 0.85;
+}
+
+.toast-undo-btn:hover {
+  opacity: 1;
+}
+
 .monthly-panel canvas {
   width: 100%;
   height: auto;
@@ -703,6 +859,152 @@ button {
     flex-direction: column;
     align-items: stretch;
   }
+
+  .fab-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    bottom: calc(70px + env(safe-area-inset-bottom));
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1;
+    box-shadow: 0 8px 24px rgba(201, 95, 55, 0.4);
+    z-index: 25;
+    border: none;
+  }
+
+  /* Expense table → card layout on mobile */
+  .expense-table:not(.payment-table) {
+    min-width: 0;
+  }
+
+  .expense-table:not(.payment-table) thead {
+    display: none;
+  }
+
+  .expense-table:not(.payment-table) tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 16px;
+    border-bottom: 1px solid rgba(72, 47, 40, 0.1);
+  }
+
+  .expense-table:not(.payment-table) tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .expense-table:not(.payment-table) tbody td {
+    display: block;
+    padding: 0;
+    border-bottom: none;
+    width: auto;
+    white-space: normal;
+  }
+
+  /* Description full-width at top */
+  .expense-table:not(.payment-table) tbody td:nth-child(2) {
+    grid-column: 1 / -1;
+    order: -5;
+  }
+
+  .expense-table:not(.payment-table) tbody td:nth-child(1) { order: -4; }
+  .expense-table:not(.payment-table) tbody td:nth-child(3) { order: -3; }
+  .expense-table:not(.payment-table) tbody td:nth-child(4) { order: -2; }
+  .expense-table:not(.payment-table) tbody td:nth-child(5) { order: -1; }
+
+  /* Remove button full-width at bottom */
+  .expense-table:not(.payment-table) tbody td:nth-child(6) {
+    grid-column: 1 / -1;
+    order: 0;
+    text-align: right;
+  }
+
+  /* Empty state spans both columns */
+  .expense-table:not(.payment-table) tbody td.empty-state {
+    grid-column: 1 / -1;
+  }
+
+  /* Mini labels above each field */
+  .expense-table:not(.payment-table) tbody td::before {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    font-weight: 800;
+    margin-bottom: 5px;
+  }
+
+  .expense-table:not(.payment-table) tbody td:nth-child(1)::before { content: "Date"; }
+  .expense-table:not(.payment-table) tbody td:nth-child(2)::before { content: "Description"; }
+  .expense-table:not(.payment-table) tbody td:nth-child(3)::before { content: "Amount"; }
+  .expense-table:not(.payment-table) tbody td:nth-child(4)::before { content: "Category"; }
+  .expense-table:not(.payment-table) tbody td:nth-child(5)::before { content: "Paid from"; }
+  .expense-table:not(.payment-table) tbody td:nth-child(6)::before { content: none; }
+
+  .expense-table:not(.payment-table) tbody td input,
+  .expense-table:not(.payment-table) tbody td select {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+.low-balance-warning {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(139, 30, 30, 0.96);
+  color: #fff2f2;
+  padding: 14px 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(139, 30, 30, 0.4);
+  z-index: 50;
+  max-width: 420px;
+  width: calc(100% - 40px);
+  backdrop-filter: blur(8px);
+  animation: warningPulse 2.4s ease-in-out infinite;
+}
+
+.low-balance-warning.hidden {
+  display: none;
+}
+
+.low-balance-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  color: #ffb3b3;
+}
+
+.low-balance-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.low-balance-text strong {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+@keyframes warningPulse {
+  0%, 100% { box-shadow: 0 8px 32px rgba(139, 30, 30, 0.4); }
+  50% { box-shadow: 0 8px 40px rgba(139, 30, 30, 0.7); }
 }
 
 /* iPhone */

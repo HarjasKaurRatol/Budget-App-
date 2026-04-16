@@ -13,7 +13,6 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 const FIRESTORE_DOC = doc(db, "budget", "mydata");
-
 const STORAGE_KEY = "budget-snapshot-state";
 
 const CATEGORY_STYLES = {
@@ -85,6 +84,7 @@ const addPaymentEntryButton = document.querySelector("#addPaymentEntryButton");
 const addExpenseButton = document.querySelector("#addExpenseButton");
 const loadScriptDataButton = document.querySelector("#loadScriptDataButton");
 const saveSheetDataButton = document.querySelector("#saveSheetDataButton");
+const fabAddExpense = document.querySelector("#fabAddExpense");
 const sideNavButtons = document.querySelectorAll(".side-nav-item");
 const paymentTableBody = document.querySelector("#paymentTableBody");
 const paymentRowTemplate = document.querySelector("#paymentRowTemplate");
@@ -126,11 +126,15 @@ const afterPurchase = document.querySelector("#afterPurchase");
 const purchaseImpactText = document.querySelector("#purchaseImpactText");
 const decisionText = document.querySelector("#decisionText");
 const decisionCard = document.querySelector("#decisionCard");
+const lowBalanceWarning = document.querySelector("#lowBalanceWarning");
+const lowBalanceMessage = document.querySelector("#lowBalanceMessage");
+const LOW_BALANCE_THRESHOLD = 850;
 const treatBudget = document.querySelector("#treatBudget");
 const treatStatus = document.querySelector("#treatStatus");
 const treatReason = document.querySelector("#treatReason");
 const treatPurchaseFit = document.querySelector("#treatPurchaseFit");
 const treatCard = document.querySelector("#treatCard");
+
 let saveStatusTimeout = null;
 let toastTimeout = null;
 let lastManualSaveSnapshot = serializeState(state);
@@ -141,6 +145,10 @@ renderPaymentEntries();
 renderExpenses();
 updateSummary();
 
+if (saveStatus) {
+  saveStatus.textContent = "Syncing with cloud…";
+}
+
 // Load from Firestore and override local state if cloud data exists
 getDoc(FIRESTORE_DOC).then((snap) => {
   if (!snap.exists()) return;
@@ -148,10 +156,8 @@ getDoc(FIRESTORE_DOC).then((snap) => {
   const firestoreExpenses = Array.isArray(data.expenses) ? data.expenses : [];
   const localExpenses = state.expenses;
 
-  // Don't replace real local data with empty/fewer Firestore data.
-  // This prevents a stale or empty Firestore doc from wiping localStorage.
   if (localExpenses.length > 0 && firestoreExpenses.length < localExpenses.length) {
-    showSaveStatus("Local data kept — cloud had less data. Click Save to sync.");
+    showSaveStatus("Local data kept — cloud had less data. Click Sync to cloud to upload.");
     showToast("Cloud data had fewer entries than your local data. Your local data was kept.", "info");
     return;
   }
@@ -251,6 +257,12 @@ addPaymentEntryButton.addEventListener("click", () => {
   scrollToNewestPaymentRow();
 });
 
+if (fabAddExpense) {
+  fabAddExpense.addEventListener("click", () => {
+    addExpenseRow();
+  });
+}
+
 if (loadScriptDataButton) {
   loadScriptDataButton.addEventListener("click", () => {
     state.expenses = cloneDefaultState().expenses;
@@ -319,6 +331,11 @@ sideNavButtons.forEach((button) => {
       return;
     }
 
+    if (action === "calculator") {
+      openCalculator();
+      return;
+    }
+
     if (targetId) {
       const target = document.querySelector(`#${targetId}`);
       if (target) {
@@ -327,6 +344,168 @@ sideNavButtons.forEach((button) => {
     }
   });
 });
+
+// ─── Calculator ───────────────────────────────────────────────────────────────
+
+const calculatorModal = document.querySelector("#calculatorModal");
+const calcDisplayEl = document.querySelector("#calcDisplay");
+const calcExpressionEl = document.querySelector("#calcExpression");
+const calcCloseButton = document.querySelector("#calcCloseButton");
+
+const calcState = {
+  display: "0",
+  expression: "",
+  firstOperand: null,
+  operator: null,
+  waitingForSecond: false,
+  justEqualed: false
+};
+
+function openCalculator() {
+  if (calculatorModal) calculatorModal.classList.remove("hidden");
+}
+
+function closeCalculator() {
+  if (calculatorModal) calculatorModal.classList.add("hidden");
+}
+
+function calcHandleAction(action, value) {
+  switch (action) {
+    case "digit":
+      if (calcState.waitingForSecond || calcState.justEqualed) {
+        calcState.display = value === "0" ? "0" : value;
+        calcState.waitingForSecond = false;
+        calcState.justEqualed = false;
+      } else {
+        calcState.display = calcState.display === "0" ? value : calcState.display + value;
+      }
+      break;
+
+    case "decimal":
+      if (calcState.waitingForSecond || calcState.justEqualed) {
+        calcState.display = "0.";
+        calcState.waitingForSecond = false;
+        calcState.justEqualed = false;
+      } else if (!calcState.display.includes(".")) {
+        calcState.display += ".";
+      }
+      break;
+
+    case "operator":
+      if (calcState.operator && !calcState.waitingForSecond) {
+        const chained = calcCompute(parseFloat(calcState.firstOperand), parseFloat(calcState.display), calcState.operator);
+        calcState.display = calcFormat(chained);
+        calcState.firstOperand = chained;
+      } else {
+        calcState.firstOperand = parseFloat(calcState.display);
+      }
+      calcState.operator = value;
+      calcState.waitingForSecond = true;
+      calcState.justEqualed = false;
+      calcState.expression = `${calcFormat(calcState.firstOperand)} ${value}`;
+      break;
+
+    case "equals":
+      if (calcState.operator && !calcState.waitingForSecond) {
+        const result = calcCompute(parseFloat(calcState.firstOperand), parseFloat(calcState.display), calcState.operator);
+        calcState.expression = `${calcFormat(calcState.firstOperand)} ${calcState.operator} ${calcState.display} =`;
+        calcState.display = calcFormat(result);
+        calcState.firstOperand = result;
+        calcState.operator = null;
+        calcState.waitingForSecond = false;
+        calcState.justEqualed = true;
+      }
+      break;
+
+    case "clear":
+      calcState.display = "0";
+      calcState.expression = "";
+      calcState.firstOperand = null;
+      calcState.operator = null;
+      calcState.waitingForSecond = false;
+      calcState.justEqualed = false;
+      break;
+
+    case "toggle-sign":
+      if (calcState.display !== "0") {
+        calcState.display = calcState.display.startsWith("-")
+          ? calcState.display.slice(1)
+          : "-" + calcState.display;
+      }
+      break;
+
+    case "percent":
+      calcState.display = calcFormat(parseFloat(calcState.display) / 100);
+      break;
+  }
+
+  calcUpdateDisplay();
+}
+
+function calcCompute(a, b, op) {
+  switch (op) {
+    case "+": return a + b;
+    case "−": return a - b;
+    case "×": return a * b;
+    case "÷": return b !== 0 ? a / b : 0;
+    default: return b;
+  }
+}
+
+function calcFormat(num) {
+  if (!isFinite(num)) return "Error";
+  return String(parseFloat(num.toPrecision(12)));
+}
+
+function calcUpdateDisplay() {
+  if (calcDisplayEl) {
+    const len = calcState.display.length;
+    calcDisplayEl.style.fontSize = len > 14 ? "1.4rem" : len > 10 ? "1.9rem" : "2.4rem";
+    calcDisplayEl.textContent = calcState.display;
+  }
+  if (calcExpressionEl) {
+    calcExpressionEl.textContent = calcState.expression;
+  }
+  document.querySelectorAll(".calc-key-op").forEach((btn) => {
+    btn.classList.toggle("active", calcState.waitingForSecond && btn.dataset.value === calcState.operator);
+  });
+}
+
+// Key clicks
+document.querySelectorAll(".calc-key").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    calcHandleAction(btn.dataset.action, btn.dataset.value);
+  });
+});
+
+// Close button & backdrop
+if (calcCloseButton) {
+  calcCloseButton.addEventListener("click", closeCalculator);
+}
+if (calculatorModal) {
+  calculatorModal.addEventListener("click", (e) => {
+    if (e.target === calculatorModal) closeCalculator();
+  });
+}
+
+// Keyboard support
+document.addEventListener("keydown", (e) => {
+  if (!calculatorModal || calculatorModal.classList.contains("hidden")) return;
+  if (e.key === "Escape") { closeCalculator(); return; }
+  if (e.key >= "0" && e.key <= "9") { calcHandleAction("digit", e.key); return; }
+  if (e.key === ".") { calcHandleAction("decimal"); return; }
+  if (e.key === "+" ) { calcHandleAction("operator", "+"); return; }
+  if (e.key === "-" ) { calcHandleAction("operator", "−"); return; }
+  if (e.key === "*" ) { calcHandleAction("operator", "×"); return; }
+  if (e.key === "/") { e.preventDefault(); calcHandleAction("operator", "÷"); return; }
+  if (e.key === "Enter" || e.key === "=") { calcHandleAction("equals"); return; }
+  if (e.key === "Backspace") {
+    calcState.display = calcState.display.length > 1 ? calcState.display.slice(0, -1) : "0";
+    calcUpdateDisplay();
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 function hydrateInputs() {
   checkingInput.value = state.checking;
@@ -448,8 +627,14 @@ function renderExpenses() {
     });
 
     removeButton.addEventListener("click", () => {
+      const removedExpense = { ...expense };
+      const removedIndex = state.expenses.findIndex((e) => e.id === expense.id);
       state.expenses = state.expenses.filter((entry) => entry.id !== expense.id);
       persistAndRefresh(true);
+      showUndoToast("Expense removed.", () => {
+        state.expenses.splice(removedIndex, 0, removedExpense);
+        persistAndRefresh(true);
+      });
     });
 
     expenseTableBody.append(fragment);
@@ -474,7 +659,7 @@ function updateSummary() {
   const categoryTotals = getCategoryTotals(expenses);
 
   const totalCashValue = checking + savings;
-  const totalExpensesValue = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const totalExpensesValue = expenses.reduce((sum, expense) => sum + expense.amount, 0) + splitwiseOweAmount;
   const checkingExpenses = expenses
     .filter((expense) => expense.source === "Checking")
     .reduce((sum, expense) => sum + expense.amount, 0);
@@ -497,9 +682,9 @@ function updateSummary() {
   const totalChaseDueValue = Math.max(0, chaseSheetCharges - chasePaidValue);
   const totalZolveDueValue = Math.max(0, zolveSheetCharges - zolvePaidValue);
   const totalCardPaymentsValue = totalChaseDueValue + totalZolveDueValue;
-  const totalMoneyLeftValue = totalCashValue - totalCardPaymentsValue;
-  const safeToSpendValue = checking + transferPlannedValue - checkingExpenses - totalCardPaymentsValue;
-  const projectedAvailableValue = safeToSpendValue + salaryAmount + splitwiseOwedAmount - splitwiseOweAmount;
+  const totalMoneyLeftValue = totalCashValue - totalCardPaymentsValue - splitwiseOweAmount;
+  const safeToSpendValue = checking + transferPlannedValue - checkingExpenses - totalCardPaymentsValue - splitwiseOweAmount;
+  const projectedAvailableValue = safeToSpendValue + salaryAmount + splitwiseOwedAmount;
   const afterPurchaseValue = totalMoneyLeftValue - purchaseAmount;
   const treatPlan = getTreatPlan({
     totalMoneyLeftValue,
@@ -538,6 +723,13 @@ function updateSummary() {
   treatReason.textContent = treatPlan.reason;
   treatPurchaseFit.textContent = treatPlan.purchaseFit;
   periodSummary.textContent = state.activePeriod ? `Viewing ${formatPeriodLabel(state.activePeriod)}` : "Viewing all periods";
+
+  if (totalMoneyLeftValue < LOW_BALANCE_THRESHOLD) {
+    lowBalanceMessage.textContent = `Total money left is ${formatCurrency(totalMoneyLeftValue)} — below your $850 safety threshold.`;
+    lowBalanceWarning.classList.remove("hidden");
+  } else {
+    lowBalanceWarning.classList.add("hidden");
+  }
 
   updateHealthLabel(safeToSpendValue);
   updateDecision(purchaseAmount, afterPurchaseValue);
@@ -1053,6 +1245,39 @@ function showToast(message, tone = "info") {
   toastTimeout = window.setTimeout(() => {
     toastNotification.classList.remove("visible");
   }, 2200);
+}
+
+function showUndoToast(message, onUndo) {
+  if (!toastNotification) {
+    return;
+  }
+
+  toastNotification.textContent = "";
+
+  const msgNode = document.createTextNode(message);
+  toastNotification.appendChild(msgNode);
+
+  const undoBtn = document.createElement("button");
+  undoBtn.textContent = "Undo";
+  undoBtn.className = "toast-undo-btn";
+  undoBtn.addEventListener("click", () => {
+    onUndo();
+    toastNotification.classList.remove("visible");
+  }, { once: true });
+  toastNotification.appendChild(undoBtn);
+
+  toastNotification.classList.remove("success", "info", "visible");
+  toastNotification.classList.add("info");
+  void toastNotification.offsetWidth;
+  toastNotification.classList.add("visible");
+
+  if (toastTimeout) {
+    window.clearTimeout(toastTimeout);
+  }
+
+  toastTimeout = window.setTimeout(() => {
+    toastNotification.classList.remove("visible");
+  }, 5000);
 }
 
 function serializeState(value) {
