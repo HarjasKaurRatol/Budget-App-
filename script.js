@@ -26,7 +26,8 @@ const CATEGORY_STYLES = {
   "Credit Card Bill": { color: "#cc1717", text: "#fff2f2" },
   Groceries: { color: "#1e7d4a", text: "#eefcf3" },
   Health: { color: "#bfd9ff", text: "#284e88" },
-  Other: { color: "#e6ddd4", text: "#5e514b" }
+  Other: { color: "#e6ddd4", text: "#5e514b" },
+  Income: { color: "#a8f0c6", text: "#0d5c30" }
 };
 
 const CATEGORY_OPTIONS = Object.keys(CATEGORY_STYLES);
@@ -116,6 +117,7 @@ const paymentsTotal = document.querySelector("#paymentsTotal");
 const totalExpenses = document.querySelector("#totalExpenses");
 const topCategory = document.querySelector("#topCategory");
 const nextBill = document.querySelector("#nextBill");
+const totalIncome = document.querySelector("#totalIncome");
 const checkingAfterExpenses = document.querySelector("#checkingAfterExpenses");
 const safeToSpend = document.querySelector("#safeToSpend");
 const visualTotalMoneyLeft = document.querySelector("#visualTotalMoneyLeft");
@@ -656,17 +658,23 @@ function updateSummary() {
   const purchaseAmount = toNumber(state.purchaseAmount);
   const expenses = getFilteredExpenses(normalizeExpenses(state.expenses), state.activePeriod);
   const paymentEntries = getFilteredEntries(normalizePaymentEntries(state.paymentEntries), state.activePeriod);
-  const categoryTotals = getCategoryTotals(expenses);
+  const spendingExpenses = expenses.filter((e) => e.category !== "Income");
+  const incomeRows = expenses.filter((e) => e.category === "Income");
+  const totalIncomeValue = incomeRows.reduce((sum, e) => sum + e.amount, 0);
+  const categoryTotals = getCategoryTotals(spendingExpenses);
 
   const totalCashValue = checking + savings;
-  const totalExpensesValue = expenses.reduce((sum, expense) => sum + expense.amount, 0) + splitwiseOweAmount;
-  const checkingExpenses = expenses
+  const totalExpensesValue = spendingExpenses.reduce((sum, expense) => sum + expense.amount, 0) + splitwiseOweAmount;
+  const checkingExpenses = spendingExpenses
     .filter((expense) => expense.source === "Checking")
     .reduce((sum, expense) => sum + expense.amount, 0);
-  const chaseSheetCharges = expenses
+  const checkingIncome = incomeRows
+    .filter((e) => e.source === "Checking")
+    .reduce((sum, e) => sum + e.amount, 0);
+  const chaseSheetCharges = spendingExpenses
     .filter((expense) => expense.source === "Chase")
     .reduce((sum, expense) => sum + expense.amount, 0);
-  const zolveSheetCharges = expenses
+  const zolveSheetCharges = spendingExpenses
     .filter((expense) => expense.source === "Zolve")
     .reduce((sum, expense) => sum + expense.amount, 0);
   const transferPlannedValue = paymentEntries
@@ -683,7 +691,7 @@ function updateSummary() {
   const totalZolveDueValue = Math.max(0, zolveSheetCharges - zolvePaidValue);
   const totalCardPaymentsValue = totalChaseDueValue + totalZolveDueValue;
   const totalMoneyLeftValue = totalCashValue - totalCardPaymentsValue - splitwiseOweAmount;
-  const safeToSpendValue = checking + transferPlannedValue - checkingExpenses - totalCardPaymentsValue - splitwiseOweAmount;
+  const safeToSpendValue = checking + transferPlannedValue + checkingIncome - checkingExpenses - totalCardPaymentsValue - splitwiseOweAmount;
   const projectedAvailableValue = safeToSpendValue + salaryAmount + splitwiseOwedAmount;
   const afterPurchaseValue = totalMoneyLeftValue - purchaseAmount;
   const treatPlan = getTreatPlan({
@@ -717,6 +725,7 @@ function updateSummary() {
   afterPurchase.textContent = formatCurrency(afterPurchaseValue);
   purchaseImpactText.textContent = `Total money left minus this purchase: ${formatCurrency(totalMoneyLeftValue)} - ${formatCurrency(purchaseAmount)}.`;
   nextBill.textContent = getNextBillLabel(expenses);
+  totalIncome.textContent = formatCurrency(totalIncomeValue);
   topCategory.textContent = getTopCategoryLabel(categoryTotals);
   treatBudget.textContent = formatCurrency(treatPlan.budget);
   treatStatus.textContent = treatPlan.status;

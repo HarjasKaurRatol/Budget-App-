@@ -957,11 +957,14 @@ button {
   }
 }
 
+.income-stat strong {
+  color: var(--good);
+}
+
 .low-balance-warning {
   position: fixed;
   bottom: 28px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 22px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -971,8 +974,7 @@ button {
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(139, 30, 30, 0.4);
   z-index: 50;
-  max-width: 420px;
-  width: calc(100% - 40px);
+  max-width: 360px;
   backdrop-filter: blur(8px);
   animation: warningPulse 2.4s ease-in-out infinite;
 }
