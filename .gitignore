@@ -1,0 +1,5 @@
+# API keys — never commit this file
+config.js
+
+# macOS
+.DS_Store

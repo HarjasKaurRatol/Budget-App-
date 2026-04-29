@@ -1220,7 +1220,110 @@ button {
 }
 
 .wishlist-suggest-wrap {
-  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+/* ── AI key section ─────────────────────────────────── */
+
+.ai-key-section {
+  background: var(--panel-strong);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-key-section.hidden { display: none; }
+
+.ai-key-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.ai-key-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ai-key-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  font-family: "Manrope", sans-serif;
+  font-size: 0.85rem;
+  background: var(--bg);
+  color: var(--ink);
+  min-width: 0;
+}
+
+.ai-key-caption {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0;
+}
+
+.ai-key-caption a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+/* ── AI result card ─────────────────────────────────── */
+
+.ai-result-card {
+  border-radius: 16px;
+  padding: 18px 20px;
+  background: linear-gradient(140deg, #fdf6f2 0%, #f8f4ff 100%);
+  border: 1.5px solid rgba(147, 58, 31, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ai-result-card.hidden { display: none; }
+
+.ai-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-result-header .decision-label { margin: 0; }
+
+.ai-model-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(147, 58, 31, 0.1);
+  color: var(--primary-deep);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ai-result-content {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.ai-result-error {
+  background: #fff5f5;
+  border-color: #c9444a;
+}
+
+.ai-result-error .ai-result-content {
+  color: #8b1e1e;
 }
 
 /* ── Primary button ─────────────────────────────────── */

@@ -11,6 +11,69 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <nav class="side-nav" aria-label="Quick actions">
+      <button class="side-nav-item side-nav-icon" data-nav-action="add-expense" type="button" aria-label="Add expense" title="Add expense">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-target="purchaseSection" type="button" aria-label="Purchase planner" title="Purchase planner">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M16 10a4 4 0 01-8 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-target="accountsSection" type="button" aria-label="Accounts" title="Accounts">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="6" width="20" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="17" cy="15" r="1.5" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-target="expenseSheetSection" type="button" aria-label="Expense sheet" title="Expense sheet">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M3 8h18M8 8v13M8 3v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-target="monthlySection" type="button" aria-label="Monthly view" title="Monthly view">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M3 9h18" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <rect x="7" y="13" width="2.5" height="2.5" rx="0.5" fill="currentColor"/>
+          <rect x="14.5" y="13" width="2.5" height="2.5" rx="0.5" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon side-nav-util-first" data-nav-action="calculator" type="button" aria-label="Calculator" title="Calculator">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4" y="2" width="16" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <rect x="7" y="5.5" width="10" height="3.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="8.5" cy="13" r="1.1" fill="currentColor"/>
+          <circle cx="12" cy="13" r="1.1" fill="currentColor"/>
+          <circle cx="15.5" cy="13" r="1.1" fill="currentColor"/>
+          <circle cx="8.5" cy="17.5" r="1.1" fill="currentColor"/>
+          <circle cx="12" cy="17.5" r="1.1" fill="currentColor"/>
+          <circle cx="15.5" cy="17.5" r="1.1" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-action="save-data" type="button" aria-label="Save data" title="Save data">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 3h11l3 3v15H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M8 3v6h8V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M9 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-action="top" type="button" aria-label="Back to top" title="Back to top">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 18V6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M7.5 10.5 12 6l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </nav>
+
     <div class="tab-bar">
       <a class="tab-btn" href="index.html">Dashboard</a>
       <a class="tab-btn tab-active" href="wishlist.html">
@@ -63,6 +126,29 @@
             </svg>
             Suggest a treat
           </button>
+          <button id="aiPickBtn" class="secondary-button" type="button">
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:6px">
+              <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 0 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1 0-2h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <circle cx="9" cy="14" r="1" fill="currentColor"/>
+              <circle cx="15" cy="14" r="1" fill="currentColor"/>
+            </svg>
+            AI Pick
+          </button>
+        </div>
+
+        <!-- AI key settings -->
+        <div id="aiKeySection" class="ai-key-section hidden">
+          <label class="ai-key-label" for="aiKeyInput">
+            <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" style="vertical-align:-1px;margin-right:4px;opacity:.6">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Anthropic API key
+          </label>
+          <div class="ai-key-row">
+            <input id="aiKeyInput" class="ai-key-input" type="password" placeholder="sk-ant-…" autocomplete="off" />
+            <button id="aiKeyConfirmBtn" class="secondary-button small-button" type="button">Save key</button>
+          </div>
+          <p class="ai-key-caption">Your key is stored only in this browser and sent only to Anthropic's API. <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer">Get a key ↗</a></p>
         </div>
 
         <div id="treatSuggestionCard" class="treat-suggestion-card hidden">
@@ -80,11 +166,35 @@
           </div>
           <div id="treatAlsoAffordable" class="also-affordable hidden"></div>
         </div>
+
+        <div id="aiResultCard" class="ai-result-card hidden">
+          <div class="ai-result-header">
+            <p class="decision-label">AI recommendation</p>
+            <span class="ai-model-badge">Claude</span>
+          </div>
+          <div id="aiResultContent" class="ai-result-content"></div>
+        </div>
       </section>
     </div>
 
     <!-- Toast -->
     <div id="wishlistToast" class="wishlist-toast hidden" role="status" aria-live="polite"></div>
+
+    <script>
+      document.querySelector('.side-nav').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-nav-action],[data-nav-target]');
+        if (!btn) return;
+        const action = btn.dataset.navAction;
+        const target = btn.dataset.navTarget;
+        if (action === 'top') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (action === 'save-data') {
+          document.getElementById('saveWishlistBtn')?.click();
+        } else if (action === 'calculator' || action === 'add-expense' || target) {
+          window.location.href = target ? `index.html#${target}` : 'index.html';
+        }
+      });
+    </script>
 
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
@@ -131,6 +241,13 @@
       const treatModeDisplay     = document.querySelector("#treatModeDisplay");
       const budgetBarCaption     = document.querySelector("#budgetBarCaption");
       const wishlistToast        = document.querySelector("#wishlistToast");
+      const aiPickBtn            = document.querySelector("#aiPickBtn");
+      const aiKeySection         = document.querySelector("#aiKeySection");
+      const aiKeyInput           = document.querySelector("#aiKeyInput");
+      const aiKeyConfirmBtn      = document.querySelector("#aiKeyConfirmBtn");  // eslint-disable-line
+      const aiResultCard         = document.querySelector("#aiResultCard");
+      const aiResultContent      = document.querySelector("#aiResultContent");
+      const AI_KEY_STORAGE       = "wl-ai-key";
 
       // ── State ─────────────────────────────────────────────
       let state = loadLocal();
@@ -465,6 +582,126 @@
       function escHtml(str) {
         return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       }
+
+      // ── AI key management ────────────────────────────────
+      // Priority: config.js (gitignored local file) → localStorage → UI input
+      let _configFileKey = "";
+      try {
+        const mod = await import("./config.js");
+        _configFileKey = (mod.ANTHROPIC_KEY || "").trim();
+      } catch { /* config.js not present — use localStorage/UI */ }
+
+      function loadAiKey() {
+        return _configFileKey || localStorage.getItem(AI_KEY_STORAGE) || "";
+      }
+
+      function initAiKey() {
+        const key = loadAiKey();
+        if (_configFileKey) {
+          // Key comes from config.js — hide the input section, show a status note
+          aiKeyInput.value = "••••••••••••••••••• (loaded from config.js)";
+          aiKeyInput.disabled = true;
+          aiKeyConfirmBtn.textContent = "Clear";
+        } else if (key) {
+          aiKeyInput.value = key;
+        }
+      }
+
+      aiKeyConfirmBtn.addEventListener("click", () => {
+        if (_configFileKey) {
+          showToast("Key is set in config.js — edit that file to change it.");
+          aiKeySection.classList.add("hidden");
+          return;
+        }
+        const key = aiKeyInput.value.trim();
+        localStorage.setItem(AI_KEY_STORAGE, key);
+        aiKeySection.classList.add("hidden");
+        showToast(key ? "API key saved." : "API key cleared.");
+      });
+
+      // ── AI Pick ───────────────────────────────────────────
+      aiPickBtn.addEventListener("click", async () => {
+        const key = loadAiKey();
+
+        if (!key) {
+          aiKeySection.classList.toggle("hidden");
+          return;
+        }
+
+        const { totalMoneyLeft, treatBudget, modeName } = calcBudget();
+        const items = (state.wishlist || [])
+          .map((w) => ({ ...w, priceNum: toNumber(w.price) }))
+          .filter((w) => w.name && w.priceNum > 0)
+          .sort((a, b) => (PRIORITY_ORDER[a.priority || "medium"]) - (PRIORITY_ORDER[b.priority || "medium"]));
+
+        if (items.length === 0) {
+          showToast("Add items with names and prices first.");
+          return;
+        }
+
+        aiPickBtn.disabled = true;
+        aiPickBtn.textContent = "Thinking…";
+        aiResultCard.classList.remove("hidden");
+        aiResultCard.className = "ai-result-card";
+        aiResultContent.textContent = "Analyzing your wishlist…";
+        aiResultCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+        const itemLines = items.map((w, i) => {
+          let line = `${i + 1}. ${w.name} — ${formatCurrency(w.priceNum)}, priority: ${w.priority || "medium"}`;
+          if (w.notes) line += `, notes: "${w.notes}"`;
+          return line;
+        }).join("\n");
+
+        const prompt = `You are a personal finance advisor. Help decide which wishlist item is the best purchase right now.
+
+Financial snapshot:
+- Total money left (after all bills and card payments): ${formatCurrency(totalMoneyLeft)}
+- Guilt-free treat budget (can spend without stress): ${formatCurrency(treatBudget)}
+- Spending mode: ${modeName}
+- Safety buffer they want to keep: $${SAFETY_BUFFER}
+
+Wishlist:
+${itemLines}
+
+Which item should they buy and why? Be direct and specific in 2–3 sentences. Consider financial health, assigned priority, value for money, and any notes they've written. If nothing is affordable right now, say so honestly and tell them what to save toward first.`;
+
+        try {
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": key,
+              "anthropic-version": "2023-06-01",
+              "anthropic-dangerous-direct-browser-access": "true"
+            },
+            body: JSON.stringify({
+              model: "claude-haiku-4-5-20251001",
+              max_tokens: 300,
+              messages: [{ role: "user", content: prompt }]
+            })
+          });
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error?.message || `API error ${res.status}`);
+          }
+
+          const data = await res.json();
+          const text = data.content?.[0]?.text?.trim() || "No response received.";
+          aiResultContent.textContent = text;
+
+        } catch (err) {
+          aiResultCard.className = "ai-result-card ai-result-error";
+          aiResultContent.textContent = err.message.includes("401")
+            ? "Invalid API key — click AI Pick to update it."
+            : `Error: ${err.message}`;
+        } finally {
+          aiPickBtn.disabled = false;
+          aiPickBtn.innerHTML = `<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:6px"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 0 2h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1 0-2h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 10 4a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="9" cy="14" r="1" fill="currentColor"/><circle cx="15" cy="14" r="1" fill="currentColor"/></svg>AI Pick`;
+        }
+      });
+
+      initAiKey();
 
       // ── Event listeners ───────────────────────────────────
       addWishlistItemBtn.addEventListener("click", () => {

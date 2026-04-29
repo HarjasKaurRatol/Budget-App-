@@ -145,6 +145,16 @@ const treatStatus = document.querySelector("#treatStatus");
 const treatReason = document.querySelector("#treatReason");
 const treatPurchaseFit = document.querySelector("#treatPurchaseFit");
 const treatCard = document.querySelector("#treatCard");
+const aiTreatCard = document.querySelector("#aiTreatCard");
+const aiTreatBadge = document.querySelector("#aiTreatBadge");
+const aiTreatName = document.querySelector("#aiTreatName");
+const aiTreatPrice = document.querySelector("#aiTreatPrice");
+const aiTreatBrand = document.querySelector("#aiTreatBrand");
+const aiTreatWhy = document.querySelector("#aiTreatWhy");
+const aiTreatBetterWrap = document.querySelector("#aiTreatBetterWrap");
+const aiBetterName = document.querySelector("#aiBetterName");
+const aiBetterPrice = document.querySelector("#aiBetterPrice");
+const aiBetterWhy = document.querySelector("#aiBetterWhy");
 
 let saveStatusTimeout = null;
 let showAllExpenses = false;
@@ -793,6 +803,7 @@ function updateSummary() {
   treatStatus.textContent = treatPlan.status;
   treatReason.textContent = treatPlan.reason;
   treatPurchaseFit.textContent = treatPlan.purchaseFit;
+  updateAiTreatCard(treatPlan.budget, state.purchaseName);
   periodSummary.textContent = state.activePeriod ? `Viewing ${formatPeriodLabel(state.activePeriod)}` : "Viewing all periods";
 
   if (totalMoneyLeftValue < LOW_BALANCE_THRESHOLD) {
@@ -1584,6 +1595,167 @@ function getTreatPlan({
     purchaseFit: getTreatPurchaseFit(budget, purchaseAmount, totalMoneyLeftValue - purchaseAmount >= TREAT_SAFETY_BUFFER),
     tone: budget > 0 ? tone : "bad"
   };
+}
+
+const TREAT_CATALOG = {
+  food: [
+    {
+      maxBudget: 10,
+      name: "Caramel Macchiato", brand: "Starbucks", price: "$6–$7",
+      why: "A classic small reward — quick and satisfying.",
+      betterBuy: { name: "Iced coffee + munchkins", brand: "Dunkin'", price: "~$5", why: "More variety, same price." }
+    },
+    {
+      maxBudget: 25,
+      name: "sushi roll combo", brand: "Sugarfish / local sushi spot", price: "$15–$22",
+      why: "A real sit-down treat without overdoing it.",
+      betterBuy: { name: "sushi tray + sparkling water", brand: "Trader Joe's", price: "~$10", why: "Restaurant-quality at half the price." }
+    },
+    {
+      maxBudget: 50,
+      name: "brunch for one", brand: "local café", price: "$25–$45",
+      why: "A proper slow morning with food and coffee.",
+      betterBuy: { name: "Bagel + lox spread + OJ", brand: "Whole Foods", price: "~$18", why: "Build your own brunch for much less." }
+    },
+    {
+      maxBudget: 75,
+      name: "omakase ramen set", brand: "local ramen shop", price: "$40–$65",
+      why: "A full-experience meal worth savoring.",
+      betterBuy: { name: "instant ramen bundle + toppings haul", brand: "H Mart", price: "~$20", why: "Level up instant ramen with real toppings." }
+    }
+  ],
+  beauty: [
+    {
+      maxBudget: 15,
+      name: "Halo Glow Liquid Filter", brand: "e.l.f. Cosmetics", price: "$14",
+      why: "Cult-favorite glow booster that punches way above its price.",
+      betterBuy: { name: "Megaglo highlighter stick", brand: "Wet n Wild", price: "~$5", why: "Same dewy glow, drugstore price." }
+    },
+    {
+      maxBudget: 30,
+      name: "Cloud Paint blush", brand: "Glossier", price: "$22",
+      why: "Buildable, natural blush with a great color range.",
+      betterBuy: { name: "Lip + Cheek cream stick", brand: "Milk Makeup", price: "~$18", why: "Dual-use product — saves you buying two things." }
+    },
+    {
+      maxBudget: 50,
+      name: "Original Collection mini perfume set", brand: "Sol de Janeiro", price: "$42",
+      why: "Sample multiple scents without committing to a full bottle.",
+      betterBuy: { name: "body mist trio", brand: "Bodycology", price: "~$14", why: "Three full-size sprays for a fraction of the cost." }
+    },
+    {
+      maxBudget: 75,
+      name: "Smoothing Serum", brand: "Olaplex (No.6)", price: "$60",
+      why: "Pro-level hair treatment that lasts months.",
+      betterBuy: { name: "Argan Oil of Morocco treatment", brand: "OGX", price: "~$10", why: "Similar smoothing effect, widely loved, much cheaper." }
+    }
+  ],
+  tech: [
+    {
+      maxBudget: 20,
+      name: "USB-C braided cable 3-pack", brand: "Anker", price: "$14–$18",
+      why: "Anker cables outlast and outperform most cheap alternatives.",
+      betterBuy: { name: "USB-C cable 6ft", brand: "Amazon Basics", price: "~$8", why: "Half the price, reliable for daily use." }
+    },
+    {
+      maxBudget: 50,
+      name: "Go Air Pop earbuds", brand: "JLab", price: "$25–$30",
+      why: "True wireless, great reviews, solid for workouts.",
+      betterBuy: { name: "SoundLiberty 53 earbuds", brand: "TaoTronics", price: "~$18", why: "Decent sound, 8-hr battery, under $20." }
+    },
+    {
+      maxBudget: 75,
+      name: "PowerCore 10000 portable charger", brand: "Anker", price: "$40–$55",
+      why: "Trusted brand, fits in a pocket, charges your phone 2–3×.",
+      betterBuy: { name: "10000mAh slim power bank", brand: "iWALK", price: "~$28", why: "Smaller form factor, still reliable." }
+    }
+  ],
+  clothing: [
+    {
+      maxBudget: 25,
+      name: "everyday crew socks 6-pack", brand: "Bombas", price: "$22",
+      why: "Noticeably better than store-brand — you'll feel the difference.",
+      betterBuy: { name: "athletic socks 12-pack", brand: "Nike (Amazon)", price: "~$18", why: "Trusted athletic brand at a solid price." }
+    },
+    {
+      maxBudget: 50,
+      name: "Perfectly Oversized Crew sweatshirt", brand: "Aerie", price: "$35–$45",
+      why: "Super soft, great fit, long-lasting loungewear.",
+      betterBuy: { name: "Essential fleece pullover", brand: "Amazon Essentials", price: "~$22", why: "Very similar feel, no branding markup." }
+    },
+    {
+      maxBudget: 75,
+      name: "Define Jacket", brand: "Lululemon", price: "$60–$75",
+      why: "Premium athletic jacket that holds up for years.",
+      betterBuy: { name: "Full-zip athletic jacket", brand: "Amazon Essentials / 90 Degree", price: "~$30", why: "Similar stretch fabric, fraction of the cost." }
+    }
+  ],
+  general: [
+    {
+      maxBudget: 10,
+      name: "fancy chocolate bar", brand: "Vosges / Compartés", price: "$8–$10",
+      why: "A small, indulgent upgrade from everyday snacks.",
+      betterBuy: { name: "Lindt Excellence dark chocolate", brand: "Lindt", price: "~$3", why: "High-quality chocolate at a grocery-store price." }
+    },
+    {
+      maxBudget: 25,
+      name: "Epsom salt soak + candle bundle", brand: "Dr. Teal's", price: "$18–$22",
+      why: "Full at-home spa experience under $25.",
+      betterBuy: { name: "Epsom salt + dollar-store candles", brand: "CVS / Dollar Tree", price: "~$8", why: "Same relaxation ritual for much less." }
+    },
+    {
+      maxBudget: 50,
+      name: "puzzle (1000-piece)", brand: "Ravensburger", price: "$22–$38",
+      why: "Hours of screen-free entertainment you can reuse or gift.",
+      betterBuy: { name: "puzzle from thrift store or Amazon Basics", brand: "Amazon", price: "~$12", why: "Same activity, keep the savings." }
+    },
+    {
+      maxBudget: 75,
+      name: "electric kettle + loose-leaf tea starter set", brand: "Fellow + Harney & Sons", price: "$55–$70",
+      why: "An everyday ritual upgrade that saves café money long-term.",
+      betterBuy: { name: "electric kettle + Bigelow tea variety pack", brand: "Amazon Basics + Bigelow", price: "~$25", why: "Same ritual, fraction of the investment." }
+    }
+  ]
+};
+
+function getTreatProductSuggestion(budget, purchaseName) {
+  if (budget <= 0) return null;
+
+  const name = (purchaseName || "").toLowerCase();
+  let category = "general";
+  if (/coffee|latte|boba|drink|snack|meal|food|restaurant|sushi|pizza|cafe|brunch|ramen/.test(name)) category = "food";
+  else if (/makeup|beauty|skincare|cream|serum|lip|mascara|blush|perfume|fragrance|hair|glow/.test(name)) category = "beauty";
+  else if (/headphone|earbud|cable|phone|charger|gadget|tech|laptop|watch|speaker/.test(name)) category = "tech";
+  else if (/shoes|shirt|dress|hoodie|jacket|pants|jeans|clothes|outfit|bag|purse|socks|sweatshirt/.test(name)) category = "clothing";
+
+  const tiers = TREAT_CATALOG[category];
+  const pick = tiers.find(t => budget <= t.maxBudget) || tiers[tiers.length - 1];
+  return pick;
+}
+
+function updateAiTreatCard(budget, purchaseName) {
+  const pick = getTreatProductSuggestion(budget, purchaseName);
+
+  if (!pick) {
+    aiTreatCard.classList.add("hidden");
+    return;
+  }
+
+  aiTreatCard.classList.remove("hidden");
+  aiTreatBadge.textContent = budget <= pick.maxBudget ? "Fits your budget" : "Close to your budget";
+  aiTreatName.textContent = pick.name;
+  aiTreatPrice.textContent = pick.price;
+  aiTreatBrand.textContent = pick.brand;
+  aiTreatWhy.textContent = pick.why;
+
+  if (pick.betterBuy) {
+    aiTreatBetterWrap.classList.remove("hidden");
+    aiBetterName.textContent = `${pick.betterBuy.name} — ${pick.betterBuy.brand}`;
+    aiBetterPrice.textContent = pick.betterBuy.price;
+    aiBetterWhy.textContent = pick.betterBuy.why;
+  } else {
+    aiTreatBetterWrap.classList.add("hidden");
+  }
 }
 
 function getTreatPurchaseFit(treatBudgetValue, purchaseAmount, staysSafe) {
