@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Budget Snapshot</title>
+    <link rel="icon" type="image/png" href="Frame 2.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -76,6 +77,14 @@
       </button>
     </nav>
 
+    <div class="tab-bar">
+      <a class="tab-btn tab-active" href="index.html">Dashboard</a>
+      <a class="tab-btn" href="wishlist.html">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        Wishlist
+      </a>
+    </div>
+
     <div class="page-shell">
       <header class="hero">
         <section class="panel hero-visualization">
@@ -130,10 +139,12 @@
             <label>
               Checking account
               <input id="checkingInput" name="checking" type="number" min="0" step="0.01" placeholder="0.00" />
+              <span class="balance-after-sheet">After sheet: <strong id="checkingNetDisplay">$0.00</strong></span>
             </label>
             <label>
               Savings account
               <input id="savingsInput" name="savings" type="number" min="0" step="0.01" placeholder="0.00" />
+              <span class="balance-after-sheet">After sheet: <strong id="savingsNetDisplay">$0.00</strong></span>
             </label>
             <label>
               Chase payment left
@@ -141,9 +152,19 @@
               <small id="chaseCardHelper" class="field-helper">Sheet charges: $0.00. Total Chase due: $0.00.</small>
             </label>
             <label>
+              Chase bill due date
+              <input id="chaseDueDateInput" name="chaseDueDate" type="date" />
+              <span id="chaseDueHelper" class="due-date-helper"></span>
+            </label>
+            <label>
               Zolve payment left
               <strong id="zolveCardTotal" class="derived-value">$0.00</strong>
               <small id="zolveCardHelper" class="field-helper">Sheet charges: $0.00. Total Zolve due: $0.00.</small>
+            </label>
+            <label>
+              Zolve bill due date
+              <input id="zolveDueDateInput" name="zolveDueDate" type="date" />
+              <span id="zolveDueHelper" class="due-date-helper"></span>
             </label>
           </form>
 

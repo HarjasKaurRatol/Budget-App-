@@ -57,8 +57,11 @@ const defaultState = {
   treatEnabled: true,
   purchaseName: "",
   purchaseAmount: "",
+  chaseDueDate: "",
+  zolveDueDate: "",
   paymentEntries: [],
-  expenses: []
+  expenses: [],
+  wishlist: []
 };
 
 const state = loadState();
@@ -69,6 +72,10 @@ const chaseCardTotal = document.querySelector("#chaseCardTotal");
 const zolveCardTotal = document.querySelector("#zolveCardTotal");
 const chaseCardHelper = document.querySelector("#chaseCardHelper");
 const zolveCardHelper = document.querySelector("#zolveCardHelper");
+const chaseDueDateInput = document.querySelector("#chaseDueDateInput");
+const zolveDueDateInput = document.querySelector("#zolveDueDateInput");
+const chaseDueHelper = document.querySelector("#chaseDueHelper");
+const zolveDueHelper = document.querySelector("#zolveDueHelper");
 const salaryAmountInput = document.querySelector("#salaryAmountInput");
 const salaryDateInput = document.querySelector("#salaryDateInput");
 const splitwiseOweAmountInput = document.querySelector("#splitwiseOweAmountInput");
@@ -118,6 +125,8 @@ const totalExpenses = document.querySelector("#totalExpenses");
 const topCategory = document.querySelector("#topCategory");
 const nextBill = document.querySelector("#nextBill");
 const totalIncome = document.querySelector("#totalIncome");
+const checkingNetDisplay = document.querySelector("#checkingNetDisplay");
+const savingsNetDisplay = document.querySelector("#savingsNetDisplay");
 const checkingAfterExpenses = document.querySelector("#checkingAfterExpenses");
 const safeToSpend = document.querySelector("#safeToSpend");
 const visualTotalMoneyLeft = document.querySelector("#visualTotalMoneyLeft");
@@ -138,6 +147,7 @@ const treatPurchaseFit = document.querySelector("#treatPurchaseFit");
 const treatCard = document.querySelector("#treatCard");
 
 let saveStatusTimeout = null;
+let showAllExpenses = false;
 let toastTimeout = null;
 let lastManualSaveSnapshot = serializeState(state);
 
@@ -170,7 +180,8 @@ getDoc(FIRESTORE_DOC).then((snap) => {
     budgetCaps: normalizeBudgetCaps(data.budgetCaps),
     treatMode: TREAT_MODES[data.treatMode] ? data.treatMode : "Balanced",
     treatEnabled: data.treatEnabled !== false,
-    expenses: firestoreExpenses.map((e) => ({ ...e, category: normalizeCategory(e) }))
+    expenses: firestoreExpenses.map((e) => ({ ...e, category: normalizeCategory(e) })),
+    wishlist: Array.isArray(data.wishlist) ? data.wishlist : []
   });
   lastManualSaveSnapshot = serializeState(state);
   hydrateInputs();
@@ -221,6 +232,16 @@ splitwiseOwedAmountInput.addEventListener("input", (event) => {
 
 splitwiseOwedDateInput.addEventListener("input", (event) => {
   state.splitwiseOwedDate = event.target.value;
+  persistAndRefresh();
+});
+
+chaseDueDateInput.addEventListener("input", (event) => {
+  state.chaseDueDate = event.target.value;
+  persistAndRefresh();
+});
+
+zolveDueDateInput.addEventListener("input", (event) => {
+  state.zolveDueDate = event.target.value;
   persistAndRefresh();
 });
 
@@ -522,6 +543,8 @@ function hydrateInputs() {
   treatEnabledInput.checked = Boolean(state.treatEnabled);
   purchaseNameInput.value = state.purchaseName;
   purchaseAmountInput.value = state.purchaseAmount;
+  chaseDueDateInput.value = state.chaseDueDate || "";
+  zolveDueDateInput.value = state.zolveDueDate || "";
   updateScriptPreview();
 }
 
@@ -584,63 +607,92 @@ function renderExpenses() {
     return;
   }
 
-  visibleExpenses.forEach((expense) => {
-    const fragment = expenseRowTemplate.content.cloneNode(true);
-    const row = fragment.querySelector("tr");
-    const fields = {
-      date: row.querySelector('[data-field="date"]'),
-      description: row.querySelector('[data-field="description"]'),
-      amount: row.querySelector('[data-field="amount"]'),
-      category: row.querySelector('[data-field="category"]'),
-      source: row.querySelector('[data-field="source"]')
-    };
-    const removeButton = row.querySelector('[data-action="remove"]');
-
-    fillSelect(fields.category, CATEGORY_OPTIONS, expense.category);
-    fillSelect(fields.source, SOURCE_OPTIONS, expense.source);
-
-    Object.entries(fields).forEach(([fieldName, input]) => {
-      input.value = expense[fieldName] || "";
-      input.addEventListener("input", (event) => {
-        expense[fieldName] = event.target.value;
-
-        if (fieldName === "category") {
-          tintSelect(input, event.target.value);
-        }
-
-        persistAndRefresh(fieldName === "category");
-      });
-
-      if (fieldName === "date") {
-        input.addEventListener("focus", () => {
-          if (!input.value) {
-            const today = new Date().toLocaleDateString("en-CA");
-            input.value = today;
-            expense.date = today;
-            persistAndRefresh();
-          }
-        });
-      }
-
-      if (input.tagName === "SELECT" && fieldName === "category") {
-        tintSelect(input, expense.category);
-        input.classList.add("category-pill");
-      }
-    });
-
-    removeButton.addEventListener("click", () => {
-      const removedExpense = { ...expense };
-      const removedIndex = state.expenses.findIndex((e) => e.id === expense.id);
-      state.expenses = state.expenses.filter((entry) => entry.id !== expense.id);
-      persistAndRefresh(true);
-      showUndoToast("Expense removed.", () => {
-        state.expenses.splice(removedIndex, 0, removedExpense);
-        persistAndRefresh(true);
-      });
-    });
-
-    expenseTableBody.append(fragment);
+  const sorted = [...visibleExpenses].sort((a, b) => {
+    if (!a.date && !b.date) return 0;
+    if (!a.date) return 1;
+    if (!b.date) return -1;
+    return b.date.localeCompare(a.date);
   });
+
+  const recentDates = [...new Set(sorted.map((e) => e.date).filter(Boolean))].slice(0, 5);
+  const recentSet = new Set(recentDates);
+  const recentRows = sorted.filter((e) => !e.date || recentSet.has(e.date));
+  const olderRows = sorted.filter((e) => e.date && !recentSet.has(e.date));
+
+  const toRender = showAllExpenses ? sorted : recentRows;
+
+  toRender.forEach((expense) => {
+    expenseTableBody.append(buildExpenseRow(expense));
+  });
+
+  if (olderRows.length > 0) {
+    const toggleRow = document.createElement("tr");
+    toggleRow.className = "expense-toggle-row";
+    toggleRow.innerHTML = `<td colspan="6"><button class="ghost-button expense-toggle-btn" type="button">${showAllExpenses ? "Collapse" : `See all — ${olderRows.length} older row${olderRows.length === 1 ? "" : "s"}`}</button></td>`;
+    toggleRow.querySelector("button").addEventListener("click", () => {
+      showAllExpenses = !showAllExpenses;
+      renderExpenses();
+    });
+    expenseTableBody.append(toggleRow);
+  }
+}
+
+function buildExpenseRow(expense) {
+  const fragment = expenseRowTemplate.content.cloneNode(true);
+  const row = fragment.querySelector("tr");
+  const fields = {
+    date: row.querySelector('[data-field="date"]'),
+    description: row.querySelector('[data-field="description"]'),
+    amount: row.querySelector('[data-field="amount"]'),
+    category: row.querySelector('[data-field="category"]'),
+    source: row.querySelector('[data-field="source"]')
+  };
+  const removeButton = row.querySelector('[data-action="remove"]');
+
+  fillSelect(fields.category, CATEGORY_OPTIONS, expense.category);
+  fillSelect(fields.source, SOURCE_OPTIONS, expense.source);
+
+  Object.entries(fields).forEach(([fieldName, input]) => {
+    input.value = expense[fieldName] || "";
+    input.addEventListener("input", (event) => {
+      expense[fieldName] = event.target.value;
+
+      if (fieldName === "category") {
+        tintSelect(input, event.target.value);
+      }
+
+      persistAndRefresh(fieldName === "category");
+    });
+
+    if (fieldName === "date") {
+      input.addEventListener("focus", () => {
+        if (!input.value) {
+          const today = new Date().toLocaleDateString("en-CA");
+          input.value = today;
+          expense.date = today;
+          persistAndRefresh();
+        }
+      });
+    }
+
+    if (input.tagName === "SELECT" && fieldName === "category") {
+      tintSelect(input, expense.category);
+      input.classList.add("category-pill");
+    }
+  });
+
+  removeButton.addEventListener("click", () => {
+    const removedExpense = { ...expense };
+    const removedIndex = state.expenses.findIndex((e) => e.id === expense.id);
+    state.expenses = state.expenses.filter((entry) => entry.id !== expense.id);
+    persistAndRefresh(true);
+    showUndoToast("Expense removed.", () => {
+      state.expenses.splice(removedIndex, 0, removedExpense);
+      persistAndRefresh(true);
+    });
+  });
+
+  return fragment;
 }
 
 function addExpenseRow() {
@@ -670,6 +722,12 @@ function updateSummary() {
     .reduce((sum, expense) => sum + expense.amount, 0);
   const checkingIncome = incomeRows
     .filter((e) => e.source === "Checking")
+    .reduce((sum, e) => sum + e.amount, 0);
+  const savingsExpenses = spendingExpenses
+    .filter((e) => e.source === "Savings")
+    .reduce((sum, e) => sum + e.amount, 0);
+  const savingsIncome = incomeRows
+    .filter((e) => e.source === "Savings")
     .reduce((sum, e) => sum + e.amount, 0);
   const chaseSheetCharges = spendingExpenses
     .filter((expense) => expense.source === "Chase")
@@ -725,7 +783,11 @@ function updateSummary() {
   afterPurchase.textContent = formatCurrency(afterPurchaseValue);
   purchaseImpactText.textContent = `Total money left minus this purchase: ${formatCurrency(totalMoneyLeftValue)} - ${formatCurrency(purchaseAmount)}.`;
   nextBill.textContent = getNextBillLabel(expenses);
+  updateCardDueHelper(chaseDueHelper, state.chaseDueDate);
+  updateCardDueHelper(zolveDueHelper, state.zolveDueDate);
   totalIncome.textContent = formatCurrency(totalIncomeValue);
+  checkingNetDisplay.textContent = formatCurrency(checking + checkingIncome - checkingExpenses);
+  savingsNetDisplay.textContent = formatCurrency(savings + savingsIncome - savingsExpenses);
   topCategory.textContent = getTopCategoryLabel(categoryTotals);
   treatBudget.textContent = formatCurrency(treatPlan.budget);
   treatStatus.textContent = treatPlan.status;
@@ -1033,6 +1095,35 @@ function getTopCategoryLabel(categoryTotals) {
   return `${top.category} ${formatCurrency(top.total)}`;
 }
 
+function updateCardDueHelper(helperEl, dateStr) {
+  if (!dateStr) {
+    helperEl.textContent = "";
+    helperEl.className = "due-date-helper";
+    return;
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dateStr + "T00:00:00");
+  const diffDays = Math.round((due - today) / 86400000);
+
+  if (diffDays < 0) {
+    helperEl.textContent = `Overdue by ${Math.abs(diffDays)} day${Math.abs(diffDays) === 1 ? "" : "s"}`;
+    helperEl.className = "due-date-helper due-overdue";
+  } else if (diffDays === 0) {
+    helperEl.textContent = "Due today!";
+    helperEl.className = "due-date-helper due-overdue";
+  } else if (diffDays <= 3) {
+    helperEl.textContent = `Due in ${diffDays} day${diffDays === 1 ? "" : "s"} — pay soon`;
+    helperEl.className = "due-date-helper due-urgent";
+  } else if (diffDays <= 7) {
+    helperEl.textContent = `Due in ${diffDays} days`;
+    helperEl.className = "due-date-helper due-soon";
+  } else {
+    helperEl.textContent = `Due in ${diffDays} days`;
+    helperEl.className = "due-date-helper due-ok";
+  }
+}
+
 function getNextBillLabel(expenses) {
   const upcoming = expenses
     .filter((expense) => expense.category === "Bills" && expense.date)
@@ -1172,6 +1263,7 @@ function createId() {
 
   return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
+
 
 function toNumber(value) {
   const amount = Number.parseFloat(value);

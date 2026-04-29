@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Wishlist — Budget Snapshot</title>
+    <link rel="icon" type="image/png" href="Frame 2.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="tab-bar">
+      <a class="tab-btn" href="index.html">Dashboard</a>
+      <a class="tab-btn tab-active" href="wishlist.html">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+        Wishlist
+      </a>
+    </div>
+
+    <div class="page-shell wishlist-shell">
+      <section class="panel wishlist-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="section-tag">Wishlist</p>
+            <h2>Things I want</h2>
+            <p class="supporting-text">Add items, set priority, and let the app tell you what you can actually afford right now.</p>
+          </div>
+          <div class="wishlist-header-actions">
+            <button id="saveWishlistBtn" class="ghost-button" type="button">
+              <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;margin-right:5px">
+                <path d="M5 3h11l3 3v15H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M8 3v6h8V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                <path d="M9 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              Save
+            </button>
+            <button id="addWishlistItemBtn" class="secondary-button" type="button">+ Add item</button>
+          </div>
+        </div>
+
+        <div id="wishlistItems" class="wishlist-items"></div>
+
+        <!-- Budget context bar -->
+        <div class="wishlist-budget-bar" id="wishlistBudgetBar">
+          <div class="budget-bar-inner">
+            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="flex-shrink:0;opacity:.7">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            <span>Treat budget: <strong id="treatBudgetDisplay">—</strong></span>
+            <span id="treatModeDisplay" class="budget-mode-chip"></span>
+          </div>
+          <span id="budgetBarCaption" class="budget-bar-caption"></span>
+        </div>
+
+        <div class="wishlist-suggest-wrap">
+          <button id="suggestTreatBtn" class="primary-button" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="vertical-align:-2px;margin-right:6px">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            Suggest a treat
+          </button>
+        </div>
+
+        <div id="treatSuggestionCard" class="treat-suggestion-card hidden">
+          <p class="decision-label">Top pick for you</p>
+          <span id="treatPriorityBadge" class="treat-priority-badge hidden"></span>
+          <div class="treat-main-row">
+            <strong id="treatSuggestionName">—</strong>
+            <span id="treatSuggestionPrice" class="treat-suggestion-price"></span>
+          </div>
+          <span id="treatSuggestionReason" class="stat-caption"></span>
+          <span id="treatSavingsTimeline" class="savings-timeline hidden"></span>
+          <div class="suggestion-actions">
+            <a id="treatSuggestionLink" class="treat-suggestion-link hidden" href="#" target="_blank" rel="noopener noreferrer">View item ↗</a>
+            <button id="treatMarkBoughtBtn" class="mark-bought-btn hidden" type="button">✓ Mark as bought</button>
+          </div>
+          <div id="treatAlsoAffordable" class="also-affordable hidden"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Toast -->
+    <div id="wishlistToast" class="wishlist-toast hidden" role="status" aria-live="polite"></div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+      import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDtT5vyC42DwQ0dQ3PIhP53weNXnHQBzgs",
+        authDomain: "budget-app-50d20.firebaseapp.com",
+        projectId: "budget-app-50d20",
+        storageBucket: "budget-app-50d20.firebasestorage.app",
+        messagingSenderId: "1044990034588",
+        appId: "1:1044990034588:web:2ac9351e66429e9beae359"
+      };
+
+      const firebaseApp = initializeApp(firebaseConfig);
+      const db = getFirestore(firebaseApp);
+      const FIRESTORE_DOC = doc(db, "budget", "mydata");
+      const STORAGE_KEY = "budget-snapshot-state";
+      const SAFETY_BUFFER = 600;
+      const TREAT_SAFETY_BUFFER = 300;
+      const TREAT_MODES = {
+        Conservative: { percent: 0.05, cap: 25, cardThreshold: 0.25 },
+        Balanced:     { percent: 0.1,  cap: 50, cardThreshold: 0.4  },
+        Flexible:     { percent: 0.15, cap: 75, cardThreshold: 0.55 }
+      };
+      const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
+      const PRIORITY_LABELS = { high: "High priority", medium: "Medium priority", low: "Low priority" };
+
+      // ── DOM refs ──────────────────────────────────────────
+      const wishlistItemsEl      = document.querySelector("#wishlistItems");
+      const addWishlistItemBtn   = document.querySelector("#addWishlistItemBtn");
+      const saveWishlistBtn      = document.querySelector("#saveWishlistBtn");
+      const suggestTreatBtn      = document.querySelector("#suggestTreatBtn");
+      const treatSuggestionCard  = document.querySelector("#treatSuggestionCard");
+      const treatPriorityBadge   = document.querySelector("#treatPriorityBadge");
+      const treatSuggestionName  = document.querySelector("#treatSuggestionName");
+      const treatSuggestionPrice = document.querySelector("#treatSuggestionPrice");
+      const treatSuggestionReason= document.querySelector("#treatSuggestionReason");
+      const treatSavingsTimeline = document.querySelector("#treatSavingsTimeline");
+      const treatSuggestionLink  = document.querySelector("#treatSuggestionLink");
+      const treatMarkBoughtBtn   = document.querySelector("#treatMarkBoughtBtn");
+      const treatAlsoAffordable  = document.querySelector("#treatAlsoAffordable");
+      const treatBudgetDisplay   = document.querySelector("#treatBudgetDisplay");
+      const treatModeDisplay     = document.querySelector("#treatModeDisplay");
+      const budgetBarCaption     = document.querySelector("#budgetBarCaption");
+      const wishlistToast        = document.querySelector("#wishlistToast");
+
+      // ── State ─────────────────────────────────────────────
+      let state = loadLocal();
+
+      getDoc(FIRESTORE_DOC).then((snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        state = { ...state, ...data, wishlist: Array.isArray(data.wishlist) ? data.wishlist : (state.wishlist || []) };
+        renderWishlist();
+        updateBudgetBar();
+      }).catch(() => {});
+
+      function loadLocal() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : {};
+          return { wishlist: [], ...parsed };
+        } catch {
+          return { wishlist: [] };
+        }
+      }
+
+      function persist() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        setDoc(FIRESTORE_DOC, JSON.parse(JSON.stringify(state))).catch(() => {});
+      }
+
+      function createId() {
+        return window.crypto?.randomUUID?.() ?? `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      }
+
+      function toNumber(v) {
+        const n = parseFloat(v);
+        return isFinite(n) && n > 0 ? n : 0;
+      }
+
+      function formatCurrency(v) {
+        return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v ?? 0);
+      }
+
+      // ── Budget calculation (mirrors script.js logic) ──────
+      function calcBudget() {
+        const checking      = toNumber(state.checking);
+        const savings       = toNumber(state.savings);
+        const expenses      = (state.expenses || []).map((e) => ({ ...e, amount: toNumber(e.amount) }));
+        const payments      = (state.paymentEntries || []).map((e) => ({ ...e, amount: toNumber(e.amount) }));
+        const spending      = expenses.filter((e) => e.category !== "Income");
+        const income        = expenses.filter((e) => e.category === "Income");
+        const chaseCharges  = spending.filter((e) => e.source === "Chase").reduce((s, e) => s + e.amount, 0);
+        const zolveCharges  = spending.filter((e) => e.source === "Zolve").reduce((s, e) => s + e.amount, 0);
+        const chasePaid     = payments.filter((e) => e.type === "Card Payment" && e.card === "Chase").reduce((s, e) => s + e.amount, 0);
+        const zolvePaid     = payments.filter((e) => e.type === "Card Payment" && e.card === "Zolve").reduce((s, e) => s + e.amount, 0);
+        const cardDebt      = Math.max(0, chaseCharges - chasePaid) + Math.max(0, zolveCharges - zolvePaid);
+        const splitwiseOwe  = toNumber(state.splitwiseOweAmount);
+        const checkingInc   = income.filter((e) => e.source === "Checking").reduce((s, e) => s + e.amount, 0);
+        const checkingExp   = spending.filter((e) => e.source === "Checking").reduce((s, e) => s + e.amount, 0);
+        const safeToSpend   = checking + checkingInc - checkingExp - cardDebt - splitwiseOwe;
+        const totalMoneyLeft= checking + savings - cardDebt - splitwiseOwe;
+
+        const mode          = TREAT_MODES[state.treatMode] || TREAT_MODES.Balanced;
+        const trueFreeMoney = totalMoneyLeft - TREAT_SAFETY_BUFFER;
+        let treatBudget     = 0;
+
+        if (state.treatEnabled !== false && safeToSpend >= 0 && trueFreeMoney > 0 && safeToSpend > TREAT_SAFETY_BUFFER) {
+          treatBudget = Math.min(trueFreeMoney * mode.percent, mode.cap);
+          const cardRatio = cardDebt / (totalMoneyLeft || 1);
+          if (cardRatio > mode.cardThreshold) treatBudget *= 0.5;
+          const obligations = cardDebt + splitwiseOwe;
+          if (obligations > totalMoneyLeft * 0.45) treatBudget *= 0.7;
+          treatBudget = Math.max(0, Math.round(treatBudget * 100) / 100);
+        }
+
+        return { totalMoneyLeft, safeToSpend, treatBudget, modeName: state.treatMode || "Balanced" };
+      }
+
+      // ── Budget bar ────────────────────────────────────────
+      function updateBudgetBar() {
+        const { treatBudget, totalMoneyLeft, modeName } = calcBudget();
+        treatBudgetDisplay.textContent = treatBudget > 0 ? formatCurrency(treatBudget) : "$0.00";
+        treatModeDisplay.textContent   = modeName || "Balanced";
+        treatModeDisplay.className     = "budget-mode-chip";
+
+        if (treatBudget === 0) {
+          budgetBarCaption.textContent = "No treat budget right now — focus on clearing obligations first.";
+        } else {
+          budgetBarCaption.textContent = `Total left after all obligations: ${formatCurrency(totalMoneyLeft)}`;
+        }
+      }
+
+      // ── Affordability status for an item ─────────────────
+      function affordStatus(priceNum, treatBudget, totalMoneyLeft) {
+        if (priceNum <= 0) return null;
+        if (priceNum <= treatBudget)                          return { cls: "afford-yes",     text: "Can treat yourself" };
+        if (totalMoneyLeft - priceNum >= SAFETY_BUFFER)       return { cls: "afford-caution", text: "Affordable, over treat budget" };
+        return { cls: "afford-no", text: "Saving needed" };
+      }
+
+      // ── Wishlist render ───────────────────────────────────
+      function renderWishlist() {
+        if (!state.wishlist) state.wishlist = [];
+        wishlistItemsEl.innerHTML = "";
+
+        if (state.wishlist.length === 0) {
+          wishlistItemsEl.innerHTML = `<p class="wishlist-empty">No items yet. Tap "+ Add item" to start your list.</p>`;
+          return;
+        }
+
+        const { treatBudget, totalMoneyLeft } = calcBudget();
+
+        state.wishlist.forEach((item) => {
+          const prio   = item.priority || "medium";
+          const status = affordStatus(toNumber(item.price), treatBudget, totalMoneyLeft);
+
+          const card = document.createElement("div");
+          card.className = "wishlist-item";
+          card.innerHTML = `
+            <div class="wishlist-item-row">
+              <input class="wishlist-name-input" type="text" placeholder="Item name (e.g. AirPods, weekend trip)" value="${escHtml(item.name || "")}" />
+              <input class="wishlist-price-input" type="number" min="0" step="0.01" placeholder="$0.00" value="${escHtml(item.price || "")}" />
+              <button class="ghost-button small-button wishlist-remove-btn" type="button" aria-label="Remove item">×</button>
+            </div>
+            <div class="wishlist-item-meta">
+              <div class="priority-pills">
+                <span class="priority-label">Priority:</span>
+                <button class="priority-pill${prio === "low"    ? " pill-active pill-low"    : ""}" data-p="low"    type="button">Low</button>
+                <button class="priority-pill${prio === "medium" ? " pill-active pill-medium" : ""}" data-p="medium" type="button">Mid</button>
+                <button class="priority-pill${prio === "high"   ? " pill-active pill-high"   : ""}" data-p="high"   type="button">High</button>
+              </div>
+              ${status ? `<span class="afford-chip ${status.cls}">${status.text}</span>` : ""}
+              <button class="extras-toggle-btn" type="button">
+                ${(item.link || item.notes) ? "Link / notes ▾" : "+ Link / notes"}
+              </button>
+            </div>
+            <div class="wishlist-extras${(item.link || item.notes) ? "" : " hidden"}">
+              <input class="wishlist-link-input" type="url" placeholder="Link (optional)" value="${escHtml(item.link || "")}" />
+              <input class="wishlist-notes-input" type="text" placeholder="Notes (optional)" value="${escHtml(item.notes || "")}" />
+            </div>
+          `;
+
+          card.querySelector(".wishlist-name-input").addEventListener("input", (e) => {
+            item.name = e.target.value;
+            persist();
+          });
+
+          card.querySelector(".wishlist-price-input").addEventListener("input", (e) => {
+            item.price = e.target.value;
+            persist();
+            renderWishlist();
+          });
+
+          card.querySelector(".wishlist-link-input").addEventListener("input", (e) => {
+            item.link = e.target.value.trim();
+            persist();
+          });
+
+          card.querySelector(".wishlist-notes-input").addEventListener("input", (e) => {
+            item.notes = e.target.value;
+            persist();
+          });
+
+          card.querySelector(".extras-toggle-btn").addEventListener("click", (e) => {
+            const extras = card.querySelector(".wishlist-extras");
+            const open   = extras.classList.toggle("hidden");
+            e.currentTarget.textContent = open ? "+ Link / notes" : "Link / notes ▾";
+          });
+
+          card.querySelectorAll(".priority-pill").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              item.priority = btn.dataset.p;
+              persist();
+              renderWishlist();
+            });
+          });
+
+          card.querySelector(".wishlist-remove-btn").addEventListener("click", () => {
+            state.wishlist = state.wishlist.filter((w) => w.id !== item.id);
+            persist();
+            renderWishlist();
+            treatSuggestionCard.classList.add("hidden");
+          });
+
+          wishlistItemsEl.append(card);
+        });
+      }
+
+      // ── Show / hide suggestion link ───────────────────────
+      function setSuggestionLink(url) {
+        if (url) {
+          treatSuggestionLink.href = url;
+          treatSuggestionLink.classList.remove("hidden");
+        } else {
+          treatSuggestionLink.href = "#";
+          treatSuggestionLink.classList.add("hidden");
+        }
+      }
+
+      // ── Savings timeline helper ───────────────────────────
+      function savingsTimeline(gap) {
+        if (gap <= 0) return "";
+        if (gap <= 80)  return `Set aside ${formatCurrency(gap / 2)}/week → you'll have it in 2 weeks.`;
+        if (gap <= 200) return `Set aside ${formatCurrency(gap / 4)}/week → you'll have it in 1 month.`;
+        return `Set aside ${formatCurrency(Math.ceil(gap / 12))}/week → you'll have it in 3 months.`;
+      }
+
+      // ── Render suggestion card ────────────────────────────
+      function showSuggestion(pick, mood, reason, others, gap) {
+        const prio = pick.priority || "medium";
+        treatPriorityBadge.textContent = PRIORITY_LABELS[prio];
+        treatPriorityBadge.className   = `treat-priority-badge priority-badge-${prio}`;
+        treatPriorityBadge.classList.remove("hidden");
+
+        treatSuggestionName.textContent   = pick.name;
+        treatSuggestionPrice.textContent  = formatCurrency(pick.priceNum);
+        treatSuggestionReason.textContent = reason;
+        treatSuggestionCard.className     = `treat-suggestion-card suggestion-${mood}`;
+        setSuggestionLink(pick.link);
+
+        const timeline = gap > 0 ? savingsTimeline(gap) : "";
+        if (timeline) {
+          treatSavingsTimeline.textContent = timeline;
+          treatSavingsTimeline.classList.remove("hidden");
+        } else {
+          treatSavingsTimeline.classList.add("hidden");
+        }
+
+        treatMarkBoughtBtn.dataset.itemId = pick.id;
+        treatMarkBoughtBtn.classList.remove("hidden");
+
+        if (others.length > 0) {
+          treatAlsoAffordable.innerHTML =
+            `<p class="also-label">Also within budget:</p>` +
+            others.map((o) =>
+              `<div class="also-item">
+                <span class="also-item-name">${escHtml(o.name)}</span>
+                <span class="also-item-price">${formatCurrency(o.priceNum)}</span>
+              </div>`
+            ).join("");
+          treatAlsoAffordable.classList.remove("hidden");
+        } else {
+          treatAlsoAffordable.classList.add("hidden");
+        }
+      }
+
+      // ── Suggest treat ─────────────────────────────────────
+      function suggestTreat() {
+        const { totalMoneyLeft, treatBudget } = calcBudget();
+        updateBudgetBar();
+
+        const items = (state.wishlist || [])
+          .map((w) => ({ ...w, priceNum: toNumber(w.price) }))
+          .filter((w) => w.name && w.priceNum > 0)
+          .sort((a, b) => {
+            const pd = (PRIORITY_ORDER[a.priority || "medium"]) - (PRIORITY_ORDER[b.priority || "medium"]);
+            return pd !== 0 ? pd : b.priceNum - a.priceNum;
+          });
+
+        treatSuggestionCard.classList.remove("hidden");
+        treatSuggestionCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+        if (items.length === 0) {
+          treatPriorityBadge.classList.add("hidden");
+          treatSuggestionName.textContent   = "Nothing on your list yet";
+          treatSuggestionPrice.textContent  = "";
+          treatSuggestionReason.textContent = "Add items with names and prices first.";
+          treatSuggestionCard.className     = "treat-suggestion-card";
+          treatSavingsTimeline.classList.add("hidden");
+          treatMarkBoughtBtn.classList.add("hidden");
+          treatAlsoAffordable.classList.add("hidden");
+          setSuggestionLink("");
+          return;
+        }
+
+        const affordable = items.filter((w) => w.priceNum <= treatBudget);
+        const withinSafe = items.filter((w) => totalMoneyLeft - w.priceNum >= SAFETY_BUFFER);
+
+        if (affordable.length > 0) {
+          showSuggestion(
+            affordable[0],
+            "good",
+            `Fits your ${formatCurrency(treatBudget)} guilt-free treat budget. Go for it!`,
+            affordable.slice(1, 3),
+            0
+          );
+          return;
+        }
+
+        if (withinSafe.length > 0) {
+          const pick = withinSafe[0];
+          const gap  = pick.priceNum - treatBudget;
+          showSuggestion(
+            pick,
+            "caution",
+            `${formatCurrency(gap)} over your ${formatCurrency(treatBudget)} treat budget, but you can cover it. Just no extra cushion.`,
+            withinSafe.slice(1, 3),
+            gap
+          );
+          return;
+        }
+
+        const cheapest = [...items].sort((a, b) => a.priceNum - b.priceNum)[0];
+        const needed   = cheapest.priceNum - (totalMoneyLeft - SAFETY_BUFFER);
+        showSuggestion(
+          cheapest,
+          "bad",
+          `Not yet — you'd need ${formatCurrency(Math.max(0, needed))} more to clear your $${SAFETY_BUFFER} safety buffer.`,
+          [],
+          needed
+        );
+      }
+
+      // ── Mark as bought ────────────────────────────────────
+      function markAsBought(id) {
+        const item = (state.wishlist || []).find((w) => w.id === id);
+        const name = item ? item.name : "item";
+        state.wishlist = (state.wishlist || []).filter((w) => w.id !== id);
+        persist();
+        renderWishlist();
+        treatSuggestionCard.classList.add("hidden");
+        showToast(`Congrats! "${name}" marked as bought.`);
+      }
+
+      // ── Toast ─────────────────────────────────────────────
+      let toastTimer;
+      function showToast(msg) {
+        wishlistToast.textContent = msg;
+        wishlistToast.classList.remove("hidden");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => wishlistToast.classList.add("hidden"), 3000);
+      }
+
+      // ── Escape helper (prevent XSS in innerHTML) ─────────
+      function escHtml(str) {
+        return String(str).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      // ── Event listeners ───────────────────────────────────
+      addWishlistItemBtn.addEventListener("click", () => {
+        if (!state.wishlist) state.wishlist = [];
+        state.wishlist.push({ id: createId(), name: "", price: "", link: "", notes: "", priority: "medium" });
+        persist();
+        renderWishlist();
+      });
+
+      suggestTreatBtn.addEventListener("click", suggestTreat);
+
+      saveWishlistBtn.addEventListener("click", async () => {
+        saveWishlistBtn.disabled = true;
+        saveWishlistBtn.textContent = "Saving…";
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          await setDoc(FIRESTORE_DOC, JSON.parse(JSON.stringify(state)));
+          showToast("Wishlist saved to cloud.");
+        } catch {
+          showToast("Saved locally — cloud sync failed.");
+        } finally {
+          saveWishlistBtn.disabled = false;
+          saveWishlistBtn.innerHTML = `<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M5 3h11l3 3v15H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 3v6h8V3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 17h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Save`;
+        }
+      });
+
+      treatMarkBoughtBtn.addEventListener("click", () => {
+        const id = treatMarkBoughtBtn.dataset.itemId;
+        if (id) markAsBought(id);
+      });
+
+      renderWishlist();
+      updateBudgetBar();
+    </script>
+  </body>
+</html>
