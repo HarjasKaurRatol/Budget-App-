@@ -83,7 +83,8 @@ const splitwiseOweDateInput = document.querySelector("#splitwiseOweDateInput");
 const splitwiseOwedAmountInput = document.querySelector("#splitwiseOwedAmountInput");
 const splitwiseOwedDateInput = document.querySelector("#splitwiseOwedDateInput");
 const periodFilterInput = document.querySelector("#periodFilterInput");
-const categoryFilterInput = document.querySelector("#categoryFilterInput");
+const categorySortHeader = document.querySelector("#categorySortHeader");
+const categorySortButton = document.querySelector("#categorySortButton");
 const periodSummary = document.querySelector("#periodSummary");
 const treatModeInput = document.querySelector("#treatModeInput");
 const treatEnabledInput = document.querySelector("#treatEnabledInput");
@@ -159,13 +160,12 @@ const aiBetterWhy = document.querySelector("#aiBetterWhy");
 
 let saveStatusTimeout = null;
 let showAllExpenses = false;
-let activeCategoryFilter = "";
+let categorySortDirection = "asc";
 let toastTimeout = null;
 let lastManualSaveSnapshot = serializeState(state);
 
 hydrateInputs();
 renderPeriodFilter();
-renderCategoryFilter();
 renderPaymentEntries();
 renderExpenses();
 updateSummary();
@@ -199,7 +199,6 @@ getDoc(FIRESTORE_DOC).then((snap) => {
   lastManualSaveSnapshot = serializeState(state);
   hydrateInputs();
   renderPeriodFilter();
-  renderCategoryFilter();
   renderPaymentEntries();
   renderExpenses();
   updateSummary();
@@ -265,9 +264,11 @@ periodFilterInput.addEventListener("input", (event) => {
   persistAndRefresh(true);
 });
 
-categoryFilterInput.addEventListener("input", (event) => {
-  activeCategoryFilter = event.target.value;
-  showAllExpenses = false;
+categorySortButton.addEventListener("click", () => {
+  categorySortDirection = categorySortDirection === "asc" ? "desc" : "asc";
+  categorySortHeader.setAttribute("aria-sort", categorySortDirection === "asc" ? "ascending" : "descending");
+  categorySortButton.setAttribute("aria-label", categorySortDirection === "asc" ? "Sort categories Z to A" : "Sort categories A to Z");
+  categorySortButton.title = categorySortDirection === "asc" ? "Sort categories Z to A" : "Sort categories A to Z";
   renderExpenses();
 });
 
@@ -619,36 +620,34 @@ function renderPaymentEntries() {
 
 function renderExpenses() {
   expenseTableBody.innerHTML = "";
-  const periodExpenses = getFilteredEntries(state.expenses, state.activePeriod);
-  const visibleExpenses = activeCategoryFilter
-    ? periodExpenses.filter((expense) => expense.category === activeCategoryFilter)
-    : periodExpenses;
+  const visibleExpenses = getFilteredEntries(state.expenses, state.activePeriod);
 
   if (visibleExpenses.length === 0) {
     const row = document.createElement("tr");
-    const emptyMessage = activeCategoryFilter
-      ? `No ${activeCategoryFilter} expenses${state.activePeriod ? " in this period" : ""}.`
-      : state.activePeriod
-        ? "No expenses in this period yet. Add a dated row to start tracking."
-        : "No expenses yet. Add a row to start tracking.";
+    const emptyMessage = state.activePeriod
+      ? "No expenses in this period yet. Add a dated row to start tracking."
+      : "No expenses yet. Add a row to start tracking.";
     row.innerHTML = `<td colspan="6" class="empty-state">${emptyMessage}</td>`;
     expenseTableBody.append(row);
     return;
   }
 
-  const sorted = [...visibleExpenses].sort((a, b) => {
+  const dateSorted = [...visibleExpenses].sort((a, b) => {
     if (!a.date && !b.date) return 0;
     if (!a.date) return 1;
     if (!b.date) return -1;
     return b.date.localeCompare(a.date);
   });
 
-  const recentDates = [...new Set(sorted.map((e) => e.date).filter(Boolean))].slice(0, 5);
+  const recentDates = [...new Set(dateSorted.map((e) => e.date).filter(Boolean))].slice(0, 5);
   const recentSet = new Set(recentDates);
-  const recentRows = sorted.filter((e) => !e.date || recentSet.has(e.date));
-  const olderRows = sorted.filter((e) => e.date && !recentSet.has(e.date));
+  const recentRows = dateSorted.filter((e) => !e.date || recentSet.has(e.date));
+  const olderRows = dateSorted.filter((e) => e.date && !recentSet.has(e.date));
 
-  const toRender = showAllExpenses ? sorted : recentRows;
+  const toRender = (showAllExpenses ? dateSorted : recentRows).sort((a, b) => {
+    const comparison = (a.category || "").localeCompare(b.category || "", undefined, { sensitivity: "base" });
+    return categorySortDirection === "asc" ? comparison : -comparison;
+  });
 
   toRender.forEach((expense) => {
     expenseTableBody.append(buildExpenseRow(expense));
@@ -664,14 +663,6 @@ function renderExpenses() {
     });
     expenseTableBody.append(toggleRow);
   }
-}
-
-function renderCategoryFilter() {
-  categoryFilterInput.innerHTML = [
-    '<option value="">All categories</option>',
-    ...CATEGORY_OPTIONS.map((category) => `<option value="${category}">${category}</option>`)
-  ].join("");
-  categoryFilterInput.value = activeCategoryFilter;
 }
 
 function buildExpenseRow(expense) {

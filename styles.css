@@ -397,10 +397,6 @@ button {
   min-width: 0;
 }
 
-.category-filter {
-  min-width: 180px;
-}
-
 .secondary-button {
   background: var(--primary);
   color: white;
@@ -577,6 +573,35 @@ button {
   letter-spacing: 0.08em;
   color: var(--muted);
   background: rgba(247, 239, 229, 0.9);
+}
+
+.table-sort-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+
+.sort-arrow {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-top: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  transform: rotate(45deg) translateY(2px);
+  transition: transform 140ms ease;
+}
+
+[aria-sort="descending"] .sort-arrow {
+  transform: rotate(225deg) translateY(2px);
 }
 
 .expense-table tbody tr:hover {

@@ -174,10 +174,6 @@
                 <span>Period</span>
                 <select id="periodFilterInput" name="periodFilter"></select>
               </label>
-              <label class="period-filter category-filter">
-                <span>Category</span>
-                <select id="categoryFilterInput" name="categoryFilter" aria-label="Filter expenses by category"></select>
-              </label>
               <button id="saveSheetDataButton" class="ghost-button" type="button">Sync to cloud</button>
               <button id="addExpenseButton" class="secondary-button" type="button">Add expense</button>
             </div>
@@ -190,7 +186,12 @@
                   <th>Date</th>
                   <th>Description</th>
                   <th>Amount</th>
-                  <th>Category</th>
+                  <th id="categorySortHeader" aria-sort="ascending">
+                    <button id="categorySortButton" class="table-sort-button" type="button" aria-label="Sort categories Z to A" title="Sort categories Z to A">
+                      <span>Category</span>
+                      <span class="sort-arrow" aria-hidden="true"></span>
+                    </button>
+                  </th>
                   <th>Paid from</th>
                   <th></th>
                 </tr>
