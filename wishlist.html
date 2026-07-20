@@ -76,6 +76,10 @@
 
     <div class="tab-bar">
       <a class="tab-btn" href="index.html">Dashboard</a>
+      <a class="tab-btn" href="spendingcategory.html">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><rect x="3" y="12" width="4" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="10" y="7" width="4" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="3" width="4" height="18" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        Spending
+      </a>
       <a class="tab-btn tab-active" href="wishlist.html">
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px">
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
@@ -152,12 +156,18 @@
         </div>
 
         <div id="treatSuggestionCard" class="treat-suggestion-card hidden">
-          <p class="decision-label">Top pick for you</p>
+          <p class="decision-label" id="treatCardLabel">Top pick for you</p>
+
+          <!-- AI comparison table -->
+          <div id="treatTableWrap" class="treat-table-wrap hidden"></div>
+
+          <!-- Single pick view (fallback) -->
           <span id="treatPriorityBadge" class="treat-priority-badge hidden"></span>
-          <div class="treat-main-row">
+          <div class="treat-main-row" id="treatMainRow">
             <strong id="treatSuggestionName">—</strong>
             <span id="treatSuggestionPrice" class="treat-suggestion-price"></span>
           </div>
+
           <span id="treatSuggestionReason" class="stat-caption"></span>
           <span id="treatSavingsTimeline" class="savings-timeline hidden"></span>
           <div class="suggestion-actions">
@@ -241,6 +251,9 @@
       const treatModeDisplay     = document.querySelector("#treatModeDisplay");
       const budgetBarCaption     = document.querySelector("#budgetBarCaption");
       const wishlistToast        = document.querySelector("#wishlistToast");
+      const treatCardLabel       = document.querySelector("#treatCardLabel");
+      const treatTableWrap       = document.querySelector("#treatTableWrap");
+      const treatMainRow         = document.querySelector("#treatMainRow");
       const aiPickBtn            = document.querySelector("#aiPickBtn");
       const aiKeySection         = document.querySelector("#aiKeySection");
       const aiKeyInput           = document.querySelector("#aiKeyInput");
@@ -378,12 +391,11 @@
               </div>
               ${status ? `<span class="afford-chip ${status.cls}">${status.text}</span>` : ""}
               <button class="extras-toggle-btn" type="button">
-                ${(item.link || item.notes) ? "Link / notes ▾" : "+ Link / notes"}
+                ${item.link ? "Link ▾" : "+ Link"}
               </button>
             </div>
-            <div class="wishlist-extras${(item.link || item.notes) ? "" : " hidden"}">
+            <div class="wishlist-extras${item.link ? "" : " hidden"}">
               <input class="wishlist-link-input" type="url" placeholder="Link (optional)" value="${escHtml(item.link || "")}" />
-              <input class="wishlist-notes-input" type="text" placeholder="Notes (optional)" value="${escHtml(item.notes || "")}" />
             </div>
           `;
 
@@ -403,15 +415,10 @@
             persist();
           });
 
-          card.querySelector(".wishlist-notes-input").addEventListener("input", (e) => {
-            item.notes = e.target.value;
-            persist();
-          });
-
           card.querySelector(".extras-toggle-btn").addEventListener("click", (e) => {
             const extras = card.querySelector(".wishlist-extras");
             const open   = extras.classList.toggle("hidden");
-            e.currentTarget.textContent = open ? "+ Link / notes" : "Link / notes ▾";
+            e.currentTarget.textContent = open ? "+ Link" : "Link ▾";
           });
 
           card.querySelectorAll(".priority-pill").forEach((btn) => {
@@ -452,8 +459,61 @@
         return `Set aside ${formatCurrency(Math.ceil(gap / 12))}/week → you'll have it in 3 months.`;
       }
 
-      // ── Render suggestion card ────────────────────────────
+      // ── AI comparison table ───────────────────────────────
+      function showComparisonTable(rankedRows, summary, overallMood) {
+        treatCardLabel.textContent = "Compare All Treats";
+        treatTableWrap.classList.remove("hidden");
+        treatMainRow.classList.add("hidden");
+        treatPriorityBadge.classList.add("hidden");
+        treatSuggestionReason.textContent = "";
+        treatSavingsTimeline.classList.add("hidden");
+        treatAlsoAffordable.classList.add("hidden");
+        treatMarkBoughtBtn.classList.add("hidden");
+        setSuggestionLink("");
+        treatSuggestionCard.className = `treat-suggestion-card suggestion-${overallMood}`;
+
+        const scoreCfg = {
+          best:  { label: "Best pick",       cls: "score-best"  },
+          good:  { label: "Good option",     cls: "score-good"  },
+          later: { label: "Save for later",  cls: "score-later" }
+        };
+
+        treatTableWrap.innerHTML =
+          `<div class="treat-table-head">
+            <span></span>
+            <span>Item</span>
+            <span>Price</span>
+            <span>Score</span>
+          </div>` +
+          rankedRows.map((row, i) => {
+            const sc = scoreCfg[row.score] || scoreCfg.later;
+            return `
+              <div class="treat-table-row${i === 0 ? " treat-row-winner" : ""}">
+                <div class="treat-row-top">
+                  <span class="treat-row-rank">${i === 0 ? "🥇" : i + 1}</span>
+                  <span class="treat-row-name">${escHtml(row.item.name)}</span>
+                  <span class="treat-row-price">${formatCurrency(row.item.priceNum)}</span>
+                  <span class="treat-row-score ${sc.cls}">${sc.label}</span>
+                </div>
+                <div class="treat-row-meta">
+                  <span class="treat-row-budget-chip ${row.budgetCls}">${escHtml(row.budgetLabel)}</span>
+                  <span class="treat-row-why">${escHtml(row.why)}</span>
+                </div>
+                ${i === 0 ? `<button class="mark-bought-btn treat-row-buy" data-item-id="${escHtml(row.item.id)}">✓ Mark as bought</button>` : ""}
+              </div>`;
+          }).join("") +
+          `<div class="treat-table-summary">${escHtml(summary)}</div>`;
+
+        const buyBtn = treatTableWrap.querySelector(".treat-row-buy");
+        if (buyBtn) buyBtn.addEventListener("click", () => markAsBought(buyBtn.dataset.itemId));
+      }
+
+      // ── Render suggestion card (fallback) ─────────────────
       function showSuggestion(pick, mood, reason, others, gap) {
+        treatCardLabel.textContent = "Top pick for you";
+        treatTableWrap.classList.add("hidden");
+        treatTableWrap.innerHTML = "";
+        treatMainRow.classList.remove("hidden");
         const prio = pick.priority || "medium";
         treatPriorityBadge.textContent = PRIORITY_LABELS[prio];
         treatPriorityBadge.className   = `treat-priority-badge priority-badge-${prio}`;
@@ -491,35 +551,8 @@
         }
       }
 
-      // ── Suggest treat ─────────────────────────────────────
-      function suggestTreat() {
-        const { totalMoneyLeft, treatBudget } = calcBudget();
-        updateBudgetBar();
-
-        const items = (state.wishlist || [])
-          .map((w) => ({ ...w, priceNum: toNumber(w.price) }))
-          .filter((w) => w.name && w.priceNum > 0)
-          .sort((a, b) => {
-            const pd = (PRIORITY_ORDER[a.priority || "medium"]) - (PRIORITY_ORDER[b.priority || "medium"]);
-            return pd !== 0 ? pd : b.priceNum - a.priceNum;
-          });
-
-        treatSuggestionCard.classList.remove("hidden");
-        treatSuggestionCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
-
-        if (items.length === 0) {
-          treatPriorityBadge.classList.add("hidden");
-          treatSuggestionName.textContent   = "Nothing on your list yet";
-          treatSuggestionPrice.textContent  = "";
-          treatSuggestionReason.textContent = "Add items with names and prices first.";
-          treatSuggestionCard.className     = "treat-suggestion-card";
-          treatSavingsTimeline.classList.add("hidden");
-          treatMarkBoughtBtn.classList.add("hidden");
-          treatAlsoAffordable.classList.add("hidden");
-          setSuggestionLink("");
-          return;
-        }
-
+      // ── Suggest treat (algorithm fallback) ───────────────────
+      function suggestTreatAlgorithm(items, treatBudget, totalMoneyLeft) {
         const affordable = items.filter((w) => w.priceNum <= treatBudget);
         const withinSafe = items.filter((w) => totalMoneyLeft - w.priceNum >= SAFETY_BUFFER);
 
@@ -556,6 +589,176 @@
           [],
           needed
         );
+      }
+
+      // ── Suggest treat (AI-powered) ────────────────────────────
+      async function suggestTreat() {
+        const { totalMoneyLeft, treatBudget } = calcBudget();
+        updateBudgetBar();
+
+        const items = (state.wishlist || [])
+          .map((w) => ({ ...w, priceNum: toNumber(w.price) }))
+          .filter((w) => w.name && w.priceNum > 0)
+          .sort((a, b) => {
+            const pd = (PRIORITY_ORDER[a.priority || "medium"]) - (PRIORITY_ORDER[b.priority || "medium"]);
+            return pd !== 0 ? pd : b.priceNum - a.priceNum;
+          });
+
+        treatSuggestionCard.classList.remove("hidden");
+        treatSuggestionCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
+
+        if (items.length === 0) {
+          treatPriorityBadge.classList.add("hidden");
+          treatSuggestionName.textContent   = "Nothing on your list yet";
+          treatSuggestionPrice.textContent  = "";
+          treatSuggestionReason.textContent = "Add items with names and prices first.";
+          treatSuggestionCard.className     = "treat-suggestion-card";
+          treatSavingsTimeline.classList.add("hidden");
+          treatMarkBoughtBtn.classList.add("hidden");
+          treatAlsoAffordable.classList.add("hidden");
+          setSuggestionLink("");
+          return;
+        }
+
+        const key = loadAiKey();
+        if (!key) {
+          aiKeySection.classList.remove("hidden");
+          suggestTreatAlgorithm(items, treatBudget, totalMoneyLeft);
+          return;
+        }
+
+        // Loading state
+        suggestTreatBtn.disabled = true;
+        suggestTreatBtn.textContent = "Thinking…";
+        treatSuggestionCard.className = "treat-suggestion-card";
+        treatPriorityBadge.classList.add("hidden");
+        treatSuggestionName.textContent   = "Analyzing your wishlist…";
+        treatSuggestionPrice.textContent  = "";
+        treatSuggestionReason.textContent = "";
+        treatSavingsTimeline.classList.add("hidden");
+        treatMarkBoughtBtn.classList.add("hidden");
+        treatAlsoAffordable.classList.add("hidden");
+        setSuggestionLink("");
+
+        // Build pool of up to 3 candidates: affordable first, then within safe, then rest
+        const affordable = items.filter((w) => w.priceNum <= treatBudget);
+        const withinSafe = items.filter((w) => totalMoneyLeft - w.priceNum >= SAFETY_BUFFER);
+        const seen = new Set();
+        const candidates = [];
+        for (const w of [...affordable, ...withinSafe, ...items]) {
+          if (!seen.has(w.id)) { seen.add(w.id); candidates.push(w); }
+          if (candidates.length === 3) break;
+        }
+
+        const labels = ["A", "B", "C"];
+        const candidateLines = candidates.map((w, i) =>
+          `${labels[i]}. "${w.name}" — ${formatCurrency(w.priceNum)}, priority: ${w.priority || "medium"}`
+        ).join("\n");
+
+        const prompt = `You are a personal finance advisor ranking wishlist items by value for money.
+
+Financial snapshot:
+- Total money left (after all bills and card payments): ${formatCurrency(totalMoneyLeft)}
+- Guilt-free treat budget: ${formatCurrency(treatBudget)}
+- Safety buffer to keep: $${SAFETY_BUFFER}
+
+Compare these ${candidates.length} items and rank them from best to worst purchase right now:
+${candidateLines}
+
+Respond ONLY with valid JSON — no markdown, no extra text:
+{"rankings":[{"name":"exact item name","score":"best|good|later","why":"one sentence on why it ranks here vs the others"}${candidates.length > 1 ? `,{"name":"exact item name","score":"best|good|later","why":"one sentence"}` : ""}${candidates.length > 2 ? `,{"name":"exact item name","score":"best|good|later","why":"one sentence"}` : ""}],"summary":"one sentence overall recommendation"}`;
+
+        try {
+          const res = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-key": key,
+              "anthropic-version": "2023-06-01",
+              "anthropic-dangerous-direct-browser-access": "true"
+            },
+            body: JSON.stringify({
+              model: "claude-haiku-4-5-20251001",
+              max_tokens: 400,
+              messages: [{ role: "user", content: prompt }]
+            })
+          });
+
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error?.message || `API error ${res.status}`);
+          }
+
+          const data = await res.json();
+          const text = data.content?.[0]?.text?.trim() || "";
+
+          let parsed;
+          try {
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
+          } catch {
+            throw new Error("Could not parse AI response.");
+          }
+
+          const rankings = Array.isArray(parsed.rankings) ? parsed.rankings : [];
+          const summary  = parsed.summary || "";
+
+          // Match AI-returned names back to actual item objects
+          function matchItem(name) {
+            const n = (name || "").toLowerCase();
+            return candidates.find((w) => w.name.toLowerCase() === n)
+              || candidates.find((w) => n.includes(w.name.toLowerCase()))
+              || candidates.find((w) => w.name.toLowerCase().includes(n));
+          }
+
+          // Build ranked rows, deduplicate so every candidate appears exactly once
+          const usedIds = new Set();
+          const rankedRows = [];
+          for (const r of rankings) {
+            const item = matchItem(r.name);
+            if (item && !usedIds.has(item.id)) {
+              usedIds.add(item.id);
+              rankedRows.push({ item, score: r.score || "later", why: r.why || "" });
+            }
+          }
+          // Append any candidates the AI missed
+          for (const w of candidates) {
+            if (!usedIds.has(w.id)) rankedRows.push({ item: w, score: "later", why: "" });
+          }
+
+          // Add local affordability labels
+          rankedRows.forEach((row) => {
+            const p = row.item.priceNum;
+            if (p <= treatBudget) {
+              row.budgetLabel = "✓ In budget";
+              row.budgetCls   = "budget-yes";
+            } else if (totalMoneyLeft - p >= SAFETY_BUFFER) {
+              row.budgetLabel = `+${formatCurrency(p - treatBudget)} over`;
+              row.budgetCls   = "budget-over";
+            } else {
+              row.budgetLabel = "Needs saving";
+              row.budgetCls   = "budget-no";
+            }
+          });
+
+          const winner     = rankedRows[0]?.item;
+          const overallMood = winner
+            ? (winner.priceNum <= treatBudget ? "good" : (totalMoneyLeft - winner.priceNum >= SAFETY_BUFFER ? "caution" : "bad"))
+            : "bad";
+
+          showComparisonTable(rankedRows, summary, overallMood);
+
+        } catch (err) {
+          showToast(
+            err.message.includes("401")
+              ? "Invalid API key — click AI Pick to update it."
+              : "AI unavailable — using smart suggestion instead."
+          );
+          suggestTreatAlgorithm(items, treatBudget, totalMoneyLeft);
+        } finally {
+          suggestTreatBtn.disabled = false;
+          suggestTreatBtn.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="vertical-align:-2px;margin-right:6px"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Suggest a treat`;
+        }
       }
 
       // ── Mark as bought ────────────────────────────────────
@@ -646,11 +849,9 @@
         aiResultContent.textContent = "Analyzing your wishlist…";
         aiResultCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
-        const itemLines = items.map((w, i) => {
-          let line = `${i + 1}. ${w.name} — ${formatCurrency(w.priceNum)}, priority: ${w.priority || "medium"}`;
-          if (w.notes) line += `, notes: "${w.notes}"`;
-          return line;
-        }).join("\n");
+        const itemLines = items.map((w, i) =>
+          `${i + 1}. ${w.name} — ${formatCurrency(w.priceNum)}, priority: ${w.priority || "medium"}`
+        ).join("\n");
 
         const prompt = `You are a personal finance advisor. Help decide which wishlist item is the best purchase right now.
 
@@ -706,7 +907,7 @@ Which item should they buy and why? Be direct and specific in 2–3 sentences. C
       // ── Event listeners ───────────────────────────────────
       addWishlistItemBtn.addEventListener("click", () => {
         if (!state.wishlist) state.wishlist = [];
-        state.wishlist.push({ id: createId(), name: "", price: "", link: "", notes: "", priority: "medium" });
+        state.wishlist.push({ id: createId(), name: "", price: "", link: "", priority: "medium" });
         persist();
         renderWishlist();
       });

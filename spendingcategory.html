@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Spending by Category — Budget Snapshot</title>
+    <link rel="icon" type="image/png" href="Frame 2.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <nav class="side-nav" aria-label="Quick actions">
+      <button class="side-nav-item side-nav-icon" data-nav-action="add-expense" type="button" aria-label="Add expense" title="Add expense">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-target="purchaseSection" type="button" aria-label="Purchase planner" title="Purchase planner">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M16 10a4 4 0 01-8 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-target="accountsSection" type="button" aria-label="Accounts" title="Accounts">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="2" y="6" width="20" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="17" cy="15" r="1.5" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-target="expenseSheetSection" type="button" aria-label="Expense sheet" title="Expense sheet">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M3 8h18M8 8v13M8 3v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-target="monthlySection" type="button" aria-label="Monthly view" title="Monthly view">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M3 9h18" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <rect x="7" y="13" width="2.5" height="2.5" rx="0.5" fill="currentColor"/>
+          <rect x="14.5" y="13" width="2.5" height="2.5" rx="0.5" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon side-nav-util-first" data-nav-action="calculator" type="button" aria-label="Calculator" title="Calculator">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4" y="2" width="16" height="20" rx="3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <rect x="7" y="5.5" width="10" height="3.5" rx="1.2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          <circle cx="8.5" cy="13" r="1.1" fill="currentColor"/>
+          <circle cx="12" cy="13" r="1.1" fill="currentColor"/>
+          <circle cx="15.5" cy="13" r="1.1" fill="currentColor"/>
+          <circle cx="8.5" cy="17.5" r="1.1" fill="currentColor"/>
+          <circle cx="12" cy="17.5" r="1.1" fill="currentColor"/>
+          <circle cx="15.5" cy="17.5" r="1.1" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="side-nav-item side-nav-icon" data-nav-action="top" type="button" aria-label="Back to top" title="Back to top">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 18V6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M7.5 10.5 12 6l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </nav>
+
+    <div class="tab-bar">
+      <a class="tab-btn" href="index.html">Dashboard</a>
+      <a class="tab-btn tab-active" href="spendingcategory.html">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><rect x="3" y="12" width="4" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="10" y="7" width="4" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="3" width="4" height="18" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        Spending
+      </a>
+      <a class="tab-btn" href="wishlist.html">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        Wishlist
+      </a>
+    </div>
+
+    <div class="page-shell">
+      <header class="hero">
+        <section class="panel hero-visualization">
+          <div class="panel-heading">
+            <div>
+              <p class="section-tag">Visualization</p>
+              <h2>Spending by category</h2>
+              <p id="periodSummary" class="supporting-text period-summary">Viewing all periods</p>
+            </div>
+            <label class="period-filter">
+              <span>Period</span>
+              <select id="periodFilterInput" name="periodFilter"></select>
+            </label>
+          </div>
+
+          <canvas id="expenseChart" width="720" height="280" aria-label="Expense chart"></canvas>
+          <div id="chartLegend" class="legend"></div>
+
+          <div class="stats-grid hero-stats">
+            <article class="stat-card">
+              <span>Total planned spending</span>
+              <strong id="totalExpenses">$0.00</strong>
+            </article>
+            <article class="stat-card">
+              <span>Largest category</span>
+              <strong id="topCategory">No expenses yet</strong>
+            </article>
+            <article class="stat-card">
+              <span>Available after planned spending</span>
+              <strong id="safeToSpend">$0.00</strong>
+            </article>
+            <article class="stat-card accent-stat">
+              <span>Total money left</span>
+              <small class="stat-caption">After paying the credit card bills</small>
+              <strong id="visualTotalMoneyLeft">$0.00</strong>
+            </article>
+          </div>
+
+          <div class="hero-status">
+            <span id="healthLabel">Add balances and expenses to get started.</span>
+            <span id="saveStatus" class="save-status">Loaded from saved data.</span>
+          </div>
+        </section>
+      </header>
+    </div>
+
+    <script>
+      document.querySelector('.side-nav').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-nav-action],[data-nav-target]');
+        if (!btn) return;
+        const action = btn.dataset.navAction;
+        const target = btn.dataset.navTarget;
+        if (action === 'top') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (action === 'calculator' || action === 'add-expense' || action === 'save-data' || target) {
+          window.location.href = target ? `index.html#${target}` : 'index.html';
+        }
+      });
+    </script>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+      import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDtT5vyC42DwQ0dQ3PIhP53weNXnHQBzgs",
+        authDomain: "budget-app-50d20.firebaseapp.com",
+        projectId: "budget-app-50d20",
+        storageBucket: "budget-app-50d20.firebasestorage.app",
+        messagingSenderId: "1044990034588",
+        appId: "1:1044990034588:web:2ac9351e66429e9beae359"
+      };
+
+      const db = getFirestore(initializeApp(firebaseConfig));
+      const FIRESTORE_DOC = doc(db, "budget", "mydata");
+      const STORAGE_KEY = "budget-snapshot-state";
+      const SAFETY_BUFFER = 600;
+
+      const CATEGORY_STYLES = {
+        Bills: { color: "#f7c9c1", text: "#8b1e1e" },
+        Shopping: { color: "#d8c3f0", text: "#5a3d85" },
+        "Food & Drink": { color: "#cde7b7", text: "#1b6d45" },
+        Subscriptions: { color: "#ffd5af", text: "#8a4f00" },
+        Transportation: { color: "#d0d8ff", text: "#314a9f" },
+        Travel: { color: "#8b4b10", text: "#fff3dd" },
+        Entertainment: { color: "#ffe7a0", text: "#6f5600" },
+        "Credit Card Bill": { color: "#cc1717", text: "#fff2f2" },
+        Groceries: { color: "#1e7d4a", text: "#eefcf3" },
+        Health: { color: "#bfd9ff", text: "#284e88" },
+        Other: { color: "#e6ddd4", text: "#5e514b" },
+        Income: { color: "#a8f0c6", text: "#0d5c30" }
+      };
+
+      const CATEGORY_OPTIONS = Object.keys(CATEGORY_STYLES);
+      const SOURCE_OPTIONS = ["Checking", "Savings", "Chase", "Zolve", "Cash"];
+
+      // DOM refs
+      const chartCanvas = document.querySelector("#expenseChart");
+      const chartContext = chartCanvas.getContext("2d");
+      const chartLegend = document.querySelector("#chartLegend");
+      const periodSummary = document.querySelector("#periodSummary");
+      const totalExpensesEl = document.querySelector("#totalExpenses");
+      const topCategoryEl = document.querySelector("#topCategory");
+      const safeToSpendEl = document.querySelector("#safeToSpend");
+      const visualTotalMoneyLeftEl = document.querySelector("#visualTotalMoneyLeft");
+      const healthLabelEl = document.querySelector("#healthLabel");
+      const periodFilterInput = document.querySelector("#periodFilterInput");
+
+      // Local-only active period (does not write back to shared state)
+      let localActivePeriod = null;
+      let state = loadState();
+
+      // Load from Firebase and refresh
+      getDoc(FIRESTORE_DOC).then((snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        state = { ...state, ...data, expenses: Array.isArray(data.expenses) ? data.expenses : (state.expenses || []) };
+        if (localActivePeriod === null) {
+          localActivePeriod = state.activePeriod || getCurrentPeriod();
+        }
+        refresh();
+      }).catch(() => {});
+
+      function loadState() {
+        try {
+          const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+          localActivePeriod = typeof parsed.activePeriod === "string" ? parsed.activePeriod : getCurrentPeriod();
+          return {
+            checking: "",
+            savings: "",
+            splitwiseOweAmount: "",
+            expenses: [],
+            paymentEntries: [],
+            budgetCaps: [],
+            ...parsed
+          };
+        } catch {
+          localActivePeriod = getCurrentPeriod();
+          return { checking: "", savings: "", splitwiseOweAmount: "", expenses: [], paymentEntries: [], budgetCaps: [] };
+        }
+      }
+
+      function refresh() {
+        renderPeriodFilter();
+        updateStats();
+      }
+
+      // ── Period filter ─────────────────────────────────────
+      function renderPeriodFilter() {
+        const periods = getAvailablePeriods();
+        const options = ['<option value="">All periods</option>']
+          .concat(periods.map((p) =>
+            `<option value="${p}" ${p === localActivePeriod ? "selected" : ""}>${formatPeriodLabel(p)}</option>`
+          ));
+        periodFilterInput.innerHTML = options.join("");
+        periodFilterInput.value = localActivePeriod || "";
+      }
+
+      function getAvailablePeriods() {
+        const set = new Set();
+        (state.expenses || []).forEach((e) => { const p = toPeriod(e.date); if (p) set.add(p); });
+        (state.paymentEntries || []).forEach((e) => { const p = toPeriod(e.date); if (p) set.add(p); });
+        if (localActivePeriod) set.add(localActivePeriod);
+        return Array.from(set).sort().reverse();
+      }
+
+      periodFilterInput.addEventListener("input", (e) => {
+        localActivePeriod = e.target.value || null;
+        updateStats();
+      });
+
+      // ── Stats & chart ─────────────────────────────────────
+      function updateStats() {
+        const checking = toNumber(state.checking);
+        const savings = toNumber(state.savings);
+        const splitwiseOwe = toNumber(state.splitwiseOweAmount);
+
+        const expenses = getFilteredExpenses(normalizeExpenses(state.expenses || []), localActivePeriod);
+        const payments = getFilteredEntries(normalizePaymentEntries(state.paymentEntries || []), localActivePeriod);
+
+        const spending = expenses.filter((e) => e.category !== "Income");
+        const income = expenses.filter((e) => e.category === "Income");
+
+        const checkingExpenses = spending.filter((e) => e.source === "Checking").reduce((s, e) => s + e.amount, 0);
+        const checkingIncome = income.filter((e) => e.source === "Checking").reduce((s, e) => s + e.amount, 0);
+        const chaseCharges = spending.filter((e) => e.source === "Chase").reduce((s, e) => s + e.amount, 0);
+        const zolveCharges = spending.filter((e) => e.source === "Zolve").reduce((s, e) => s + e.amount, 0);
+        const chasePaid = payments.filter((e) => e.type === "Card Payment" && e.card === "Chase").reduce((s, e) => s + e.amount, 0);
+        const zolvePaid = payments.filter((e) => e.type === "Card Payment" && e.card === "Zolve").reduce((s, e) => s + e.amount, 0);
+        const transferPlanned = payments.filter((e) => e.type === "Savings to Checking").reduce((s, e) => s + e.amount, 0);
+
+        const chaseDue = Math.max(0, chaseCharges - chasePaid);
+        const zolveDue = Math.max(0, zolveCharges - zolvePaid);
+        const totalCards = chaseDue + zolveDue;
+        const totalMoneyLeft = checking + savings - totalCards - splitwiseOwe;
+        const safeToSpend = checking + transferPlanned + checkingIncome - checkingExpenses - totalCards - splitwiseOwe;
+        const totalExpensesValue = spending.reduce((s, e) => s + e.amount, 0) + splitwiseOwe;
+
+        const categoryTotals = getCategoryTotals(spending);
+
+        totalExpensesEl.textContent = formatCurrency(totalExpensesValue);
+        topCategoryEl.textContent = getTopCategoryLabel(categoryTotals);
+        safeToSpendEl.textContent = formatCurrency(safeToSpend);
+        visualTotalMoneyLeftEl.textContent = formatCurrency(totalMoneyLeft);
+        periodSummary.textContent = localActivePeriod
+          ? `Viewing ${formatPeriodLabel(localActivePeriod)}`
+          : "Viewing all periods";
+
+        updateHealthLabel(safeToSpend);
+        renderLegend(categoryTotals);
+        drawChart(categoryTotals);
+      }
+
+      function updateHealthLabel(safeToSpend) {
+        healthLabelEl.className = "";
+        if (safeToSpend > SAFETY_BUFFER) {
+          healthLabelEl.textContent = "You still have room after your checking expenses.";
+          healthLabelEl.classList.add("good");
+        } else if (safeToSpend >= 0) {
+          healthLabelEl.textContent = "Your checking balance covers the plan, but the cushion is small.";
+          healthLabelEl.classList.add("caution");
+        } else {
+          healthLabelEl.textContent = "Your planned checking expenses are higher than your checking balance.";
+          healthLabelEl.classList.add("bad");
+        }
+      }
+
+      // ── Legend ────────────────────────────────────────────
+      function renderLegend(categoryTotals) {
+        chartLegend.innerHTML = "";
+        if (categoryTotals.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "legend-item";
+          empty.textContent = "Add expenses to build the chart";
+          chartLegend.append(empty);
+          return;
+        }
+        categoryTotals.forEach((entry) => {
+          const cap = getCategoryCapAmount(entry.category);
+          const over = cap > 0 && entry.total > cap;
+          const item = document.createElement("div");
+          item.className = over ? "legend-item over-cap" : "legend-item";
+          const helperText = cap > 0
+            ? `${formatCurrency(Math.abs(cap - entry.total))} ${over ? "over" : "left"}`
+            : "No cap";
+          item.innerHTML = `
+            <span class="legend-swatch" style="background:${over ? "#c74444" : CATEGORY_STYLES[entry.category].color}"></span>
+            <div class="legend-copy">
+              <span class="legend-title">${entry.category}: ${formatCurrency(entry.total)}</span>
+              <small class="legend-helper">${helperText}</small>
+            </div>
+          `;
+          chartLegend.append(item);
+        });
+      }
+
+      // ── Chart drawing ─────────────────────────────────────
+      function drawChart(categoryTotals) {
+        const dpr = window.devicePixelRatio || 1;
+        const width = chartCanvas.clientWidth || 720;
+        const height = 280;
+
+        chartCanvas.width = width * dpr;
+        chartCanvas.height = height * dpr;
+        chartContext.setTransform(dpr, 0, 0, dpr, 0, 0);
+        chartContext.clearRect(0, 0, width, height);
+
+        if (categoryTotals.length === 0) {
+          chartContext.fillStyle = "#8b7d77";
+          chartContext.font = "600 16px Manrope";
+          chartContext.fillText("Your category chart will appear here.", 24, 40);
+          return;
+        }
+
+        const chartWidth = width - 80;
+        const chartHeight = height - 70;
+        const barGap = 16;
+        const barWidth = Math.max(36, (chartWidth - barGap * (categoryTotals.length - 1)) / categoryTotals.length);
+        const maxValue = Math.max(...categoryTotals.map((e) => e.total), 1);
+
+        chartContext.strokeStyle = "rgba(72, 47, 40, 0.12)";
+        chartContext.lineWidth = 1;
+        for (let i = 0; i < 4; i++) {
+          const y = 20 + (chartHeight / 3) * i;
+          chartContext.beginPath();
+          chartContext.moveTo(24, y);
+          chartContext.lineTo(width - 24, y);
+          chartContext.stroke();
+        }
+
+        chartContext.font = "600 12px Manrope";
+        chartContext.textAlign = "center";
+
+        categoryTotals.forEach((entry, i) => {
+          const x = 40 + i * (barWidth + barGap);
+          const barHeight = (entry.total / maxValue) * (chartHeight - 20);
+          const y = height - 36 - barHeight;
+          const style = CATEGORY_STYLES[entry.category] || CATEGORY_STYLES.Other;
+          const cap = getCategoryCapAmount(entry.category);
+          const over = cap > 0 && entry.total > cap;
+
+          chartContext.fillStyle = over ? "#e15b5b" : style.color;
+          roundRect(chartContext, x, y, barWidth, barHeight, 14);
+          chartContext.fill();
+
+          chartContext.fillStyle = over ? "#8b1e1e" : "#5f524b";
+          chartContext.fillText(shortLabel(entry.category), x + barWidth / 2, height - 14);
+
+          chartContext.fillStyle = over ? "#8b1e1e" : style.text;
+          chartContext.fillText(formatCompactCurrency(entry.total), x + barWidth / 2, Math.max(16, y - 8));
+        });
+      }
+
+      // ── Utilities ─────────────────────────────────────────
+      function toNumber(v) {
+        const n = Number.parseFloat(v);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      function formatCurrency(v) {
+        return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
+      }
+
+      function formatCompactCurrency(v) {
+        return new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+          notation: v >= 1000 ? "compact" : "standard",
+          maximumFractionDigits: v >= 1000 ? 1 : 0
+        }).format(v);
+      }
+
+      function shortLabel(label) {
+        return label.length <= 12 ? label : `${label.slice(0, 10)}...`;
+      }
+
+      function roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      function normalizeCategory(expense) {
+        const desc = (expense.description || "").toLowerCase();
+        if (expense.category === "Travel" && /(uber|lyft|cab|subway)/.test(desc)) return "Transportation";
+        if (CATEGORY_OPTIONS.includes(expense.category)) return expense.category;
+        return "Other";
+      }
+
+      function normalizeSource(source) {
+        if (SOURCE_OPTIONS.includes(source)) return source;
+        if (source === "Credit Card") return "Chase";
+        return "Checking";
+      }
+
+      function normalizeExpenses(expenses) {
+        return expenses.map((e) => ({
+          ...e,
+          amount: toNumber(e.amount),
+          category: normalizeCategory(e),
+          source: normalizeSource(e.source)
+        }));
+      }
+
+      function normalizePaymentEntries(entries) {
+        return (Array.isArray(entries) ? entries : []).map((e) => ({
+          ...e,
+          amount: toNumber(e.amount)
+        }));
+      }
+
+      function toPeriod(date) {
+        return typeof date === "string" && date.length >= 7 ? date.slice(0, 7) : "";
+      }
+
+      function matchesPeriod(date, activePeriod) {
+        if (!activePeriod) return true;
+        if (!date) return false;
+        return toPeriod(date) === activePeriod;
+      }
+
+      function getFilteredExpenses(expenses, activePeriod) {
+        return expenses.filter((e) => matchesPeriod(e.date, activePeriod));
+      }
+
+      function getFilteredEntries(entries, activePeriod) {
+        return (Array.isArray(entries) ? entries : []).filter((e) => matchesPeriod(e.date, activePeriod));
+      }
+
+      function getCategoryTotals(expenses) {
+        const totals = new Map();
+        expenses.forEach((e) => totals.set(e.category, (totals.get(e.category) || 0) + e.amount));
+        return Array.from(totals.entries())
+          .map(([category, total]) => ({ category, total }))
+          .sort((a, b) => b.total - a.total);
+      }
+
+      function getTopCategoryLabel(categoryTotals) {
+        if (categoryTotals.length === 0) return "No expenses yet";
+        const top = categoryTotals[0];
+        return `${top.category} ${formatCurrency(top.total)}`;
+      }
+
+      function getCategoryCapAmount(category) {
+        const caps = state.budgetCaps || [];
+        const match = caps.find((c) => c.category === category);
+        return match ? toNumber(match.amount) : 0;
+      }
+
+      function formatPeriodLabel(period) {
+        if (!period) return "All periods";
+        const [year, month] = period.split("-");
+        return new Date(Number(year), Number(month) - 1, 1).toLocaleDateString(undefined, {
+          month: "long",
+          year: "numeric"
+        });
+      }
+
+      function getCurrentPeriod() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      }
+
+      // Initial render
+      refresh();
+
+      // Redraw chart on resize
+      window.addEventListener("resize", () => drawChart(
+        getCategoryTotals(
+          getFilteredExpenses(normalizeExpenses(state.expenses || []), localActivePeriod)
+            .filter((e) => e.category !== "Income")
+        )
+      ));
+    </script>
+  </body>
+</html>

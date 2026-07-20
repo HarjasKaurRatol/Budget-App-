@@ -397,6 +397,10 @@ button {
   min-width: 0;
 }
 
+.category-filter {
+  min-width: 180px;
+}
+
 .secondary-button {
   background: var(--primary);
   color: white;
@@ -959,6 +963,7 @@ button {
 
 .tab-bar {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 18px 0 0 80px;
   width: min(1320px, calc(100% - 60px));
@@ -1483,6 +1488,131 @@ button {
 
 .suggestion-bad strong,
 .suggestion-bad .treat-suggestion-price { color: #8b1e1e; }
+
+/* ── AI comparison table ─────────────────────────────── */
+
+.treat-table-wrap {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.treat-table-wrap.hidden { display: none; }
+
+.treat-table-head {
+  display: grid;
+  grid-template-columns: 28px 1fr 74px 96px;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 12px;
+  background: rgba(0,0,0,0.04);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.treat-table-row {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 11px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.treat-row-winner {
+  background: rgba(23, 100, 61, 0.05);
+}
+
+.treat-row-top {
+  display: grid;
+  grid-template-columns: 28px 1fr 74px 96px;
+  gap: 8px;
+  align-items: center;
+}
+
+.treat-row-rank {
+  font-size: 0.95rem;
+  text-align: center;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.treat-row-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.treat-row-price {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+}
+
+.treat-row-score {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.score-best  { background: #d4f5e4; color: #17643d; }
+.score-good  { background: #fff3cd; color: #7c5200; }
+.score-later { background: #ffe0e0; color: #8b1e1e; }
+
+.treat-row-meta {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding-left: 36px;
+  flex-wrap: wrap;
+}
+
+.treat-row-budget-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.budget-yes  { background: #e6f9ef; color: #17643d; }
+.budget-over { background: #fff3e0; color: #7c3a00; }
+.budget-no   { background: #ffe0e0; color: #8b1e1e; }
+
+.treat-row-why {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.treat-row-buy {
+  align-self: flex-start;
+  margin-top: 4px;
+  margin-left: 36px;
+}
+
+.treat-table-summary {
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  font-size: 0.84rem;
+  font-weight: 600;
+  font-style: italic;
+  color: var(--ink);
+  background: rgba(0,0,0,0.025);
+  line-height: 1.45;
+}
 
 /* ── Wishlist toast ──────────────────────────────────── */
 

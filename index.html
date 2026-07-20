@@ -79,53 +79,18 @@
 
     <div class="tab-bar">
       <a class="tab-btn tab-active" href="index.html">Dashboard</a>
+      <a class="tab-btn" href="spendingcategory.html">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><rect x="3" y="12" width="4" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="10" y="7" width="4" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="3" width="4" height="18" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        Spending
+      </a>
       <a class="tab-btn" href="wishlist.html">
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
         Wishlist
       </a>
+      <a class="tab-btn" href="https://worth-it-lyart.vercel.app" target="_blank" rel="noopener noreferrer">Worth It</a>
     </div>
 
     <div class="page-shell">
-      <header class="hero">
-        <section class="panel hero-visualization">
-          <div class="panel-heading">
-            <div>
-              <p class="section-tag">Visualization</p>
-              <h2>Spending by category</h2>
-              <p id="periodSummary" class="supporting-text period-summary">Viewing all periods</p>
-            </div>
-          </div>
-
-          <canvas id="expenseChart" width="720" height="280" aria-label="Expense chart"></canvas>
-          <div id="chartLegend" class="legend"></div>
-
-          <div class="stats-grid hero-stats">
-            <article class="stat-card">
-              <span>Total planned spending</span>
-              <strong id="totalExpenses">$0.00</strong>
-            </article>
-            <article class="stat-card">
-              <span>Largest category</span>
-              <strong id="topCategory">No expenses yet</strong>
-            </article>
-            <article class="stat-card">
-              <span>Available after planned spending</span>
-              <strong id="safeToSpend">$0.00</strong>
-            </article>
-            <article class="stat-card accent-stat">
-              <span>Total money left</span>
-              <small class="stat-caption">After paying the credit card bills</small>
-              <strong id="visualTotalMoneyLeft">$0.00</strong>
-            </article>
-          </div>
-
-          <div class="hero-status">
-            <span id="healthLabel">Add balances and expenses to get started.</span>
-            <span id="saveStatus" class="save-status">Saved locally on this device.</span>
-          </div>
-        </section>
-      </header>
-
       <main class="dashboard top-dashboard">
         <section id="accountsSection" class="panel panel-accent balances-panel">
           <div class="panel-heading">
@@ -208,6 +173,10 @@
               <label class="period-filter">
                 <span>Period</span>
                 <select id="periodFilterInput" name="periodFilter"></select>
+              </label>
+              <label class="period-filter category-filter">
+                <span>Category</span>
+                <select id="categoryFilterInput" name="categoryFilter" aria-label="Filter expenses by category"></select>
               </label>
               <button id="saveSheetDataButton" class="ghost-button" type="button">Sync to cloud</button>
               <button id="addExpenseButton" class="secondary-button" type="button">Add expense</button>

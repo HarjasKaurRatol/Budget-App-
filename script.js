@@ -83,6 +83,7 @@ const splitwiseOweDateInput = document.querySelector("#splitwiseOweDateInput");
 const splitwiseOwedAmountInput = document.querySelector("#splitwiseOwedAmountInput");
 const splitwiseOwedDateInput = document.querySelector("#splitwiseOwedDateInput");
 const periodFilterInput = document.querySelector("#periodFilterInput");
+const categoryFilterInput = document.querySelector("#categoryFilterInput");
 const periodSummary = document.querySelector("#periodSummary");
 const treatModeInput = document.querySelector("#treatModeInput");
 const treatEnabledInput = document.querySelector("#treatEnabledInput");
@@ -99,7 +100,7 @@ const paymentRowTemplate = document.querySelector("#paymentRowTemplate");
 const expenseTableBody = document.querySelector("#expenseTableBody");
 const expenseRowTemplate = document.querySelector("#expenseRowTemplate");
 const chartCanvas = document.querySelector("#expenseChart");
-const chartContext = chartCanvas.getContext("2d");
+const chartContext = chartCanvas ? chartCanvas.getContext("2d") : null;
 const chartLegend = document.querySelector("#chartLegend");
 const dailyChartCanvas = document.querySelector("#dailyChart");
 const dailyChartContext = dailyChartCanvas.getContext("2d");
@@ -158,11 +159,13 @@ const aiBetterWhy = document.querySelector("#aiBetterWhy");
 
 let saveStatusTimeout = null;
 let showAllExpenses = false;
+let activeCategoryFilter = "";
 let toastTimeout = null;
 let lastManualSaveSnapshot = serializeState(state);
 
 hydrateInputs();
 renderPeriodFilter();
+renderCategoryFilter();
 renderPaymentEntries();
 renderExpenses();
 updateSummary();
@@ -196,6 +199,7 @@ getDoc(FIRESTORE_DOC).then((snap) => {
   lastManualSaveSnapshot = serializeState(state);
   hydrateInputs();
   renderPeriodFilter();
+  renderCategoryFilter();
   renderPaymentEntries();
   renderExpenses();
   updateSummary();
@@ -257,7 +261,14 @@ zolveDueDateInput.addEventListener("input", (event) => {
 
 periodFilterInput.addEventListener("input", (event) => {
   state.activePeriod = event.target.value;
-  persistAndRefresh();
+  showAllExpenses = false;
+  persistAndRefresh(true);
+});
+
+categoryFilterInput.addEventListener("input", (event) => {
+  activeCategoryFilter = event.target.value;
+  showAllExpenses = false;
+  renderExpenses();
 });
 
 treatModeInput.addEventListener("input", (event) => {
@@ -608,11 +619,19 @@ function renderPaymentEntries() {
 
 function renderExpenses() {
   expenseTableBody.innerHTML = "";
-  const visibleExpenses = getFilteredEntries(state.expenses, state.activePeriod);
+  const periodExpenses = getFilteredEntries(state.expenses, state.activePeriod);
+  const visibleExpenses = activeCategoryFilter
+    ? periodExpenses.filter((expense) => expense.category === activeCategoryFilter)
+    : periodExpenses;
 
   if (visibleExpenses.length === 0) {
     const row = document.createElement("tr");
-    row.innerHTML = `<td colspan="6" class="empty-state">${state.activePeriod ? "No expenses in this period yet. Add a dated row to start tracking." : "No expenses yet. Add a row to start tracking."}</td>`;
+    const emptyMessage = activeCategoryFilter
+      ? `No ${activeCategoryFilter} expenses${state.activePeriod ? " in this period" : ""}.`
+      : state.activePeriod
+        ? "No expenses in this period yet. Add a dated row to start tracking."
+        : "No expenses yet. Add a row to start tracking.";
+    row.innerHTML = `<td colspan="6" class="empty-state">${emptyMessage}</td>`;
     expenseTableBody.append(row);
     return;
   }
@@ -647,6 +666,14 @@ function renderExpenses() {
   }
 }
 
+function renderCategoryFilter() {
+  categoryFilterInput.innerHTML = [
+    '<option value="">All categories</option>',
+    ...CATEGORY_OPTIONS.map((category) => `<option value="${category}">${category}</option>`)
+  ].join("");
+  categoryFilterInput.value = activeCategoryFilter;
+}
+
 function buildExpenseRow(expense) {
   const fragment = expenseRowTemplate.content.cloneNode(true);
   const row = fragment.querySelector("tr");
@@ -677,7 +704,7 @@ function buildExpenseRow(expense) {
     if (fieldName === "date") {
       input.addEventListener("focus", () => {
         if (!input.value) {
-          const today = new Date().toLocaleDateString("en-CA");
+          const today = getTodayDateInputValue();
           input.value = today;
           expense.date = today;
           persistAndRefresh();
@@ -706,7 +733,8 @@ function buildExpenseRow(expense) {
 }
 
 function addExpenseRow() {
-  state.expenses.push(createExpense({ date: getDefaultDateForPeriod(state.activePeriod) }));
+  state.activePeriod = getCurrentPeriod();
+  state.expenses.push(createExpense({ date: getTodayDateInputValue() }));
   persistAndRefresh(true);
   scrollToNewestExpenseRow();
 }
@@ -772,7 +800,7 @@ function updateSummary() {
 
   totalCash.textContent = formatCurrency(totalCashValue);
   totalMoneyLeft.textContent = formatCurrency(totalMoneyLeftValue);
-  visualTotalMoneyLeft.textContent = formatCurrency(totalMoneyLeftValue);
+  if (visualTotalMoneyLeft) visualTotalMoneyLeft.textContent = formatCurrency(totalMoneyLeftValue);
   chaseCardTotal.textContent = formatCurrency(totalChaseDueValue);
   zolveCardTotal.textContent = formatCurrency(totalZolveDueValue);
   transferTotal.textContent = formatCurrency(transferPlannedValue);
@@ -787,9 +815,9 @@ function updateSummary() {
   settlementDue.textContent = formatCurrency(splitwiseOweAmount);
   projectedAvailable.textContent = formatCurrency(projectedAvailableValue);
   nextMoneyDate.textContent = getNextMoneyDateLabel(state.salaryDate, state.splitwiseOweDate, state.splitwiseOwedDate);
-  totalExpenses.textContent = formatCurrency(totalExpensesValue);
+  if (totalExpenses) totalExpenses.textContent = formatCurrency(totalExpensesValue);
   checkingAfterExpenses.textContent = formatCurrency(safeToSpendValue);
-  safeToSpend.textContent = formatCurrency(safeToSpendValue);
+  if (safeToSpend) safeToSpend.textContent = formatCurrency(safeToSpendValue);
   afterPurchase.textContent = formatCurrency(afterPurchaseValue);
   purchaseImpactText.textContent = `Total money left minus this purchase: ${formatCurrency(totalMoneyLeftValue)} - ${formatCurrency(purchaseAmount)}.`;
   nextBill.textContent = getNextBillLabel(expenses);
@@ -798,13 +826,13 @@ function updateSummary() {
   totalIncome.textContent = formatCurrency(totalIncomeValue);
   checkingNetDisplay.textContent = formatCurrency(checking + checkingIncome - checkingExpenses);
   savingsNetDisplay.textContent = formatCurrency(savings + savingsIncome - savingsExpenses);
-  topCategory.textContent = getTopCategoryLabel(categoryTotals);
+  if (topCategory) topCategory.textContent = getTopCategoryLabel(categoryTotals);
   treatBudget.textContent = formatCurrency(treatPlan.budget);
   treatStatus.textContent = treatPlan.status;
   treatReason.textContent = treatPlan.reason;
   treatPurchaseFit.textContent = treatPlan.purchaseFit;
   updateAiTreatCard(treatPlan.budget, state.purchaseName);
-  periodSummary.textContent = state.activePeriod ? `Viewing ${formatPeriodLabel(state.activePeriod)}` : "Viewing all periods";
+  if (periodSummary) periodSummary.textContent = state.activePeriod ? `Viewing ${formatPeriodLabel(state.activePeriod)}` : "Viewing all periods";
 
   if (totalMoneyLeftValue < LOW_BALANCE_THRESHOLD) {
     lowBalanceMessage.textContent = `Total money left is ${formatCurrency(totalMoneyLeftValue)} — below your $850 safety threshold.`;
@@ -824,6 +852,7 @@ function updateSummary() {
 }
 
 function updateHealthLabel(remaining) {
+  if (!healthLabel) return;
   healthLabel.className = "";
 
   if (remaining > SAFETY_BUFFER) {
@@ -877,6 +906,7 @@ function updateTreatCard(tone) {
 }
 
 function renderLegend(categoryTotals) {
+  if (!chartLegend) return;
   chartLegend.innerHTML = "";
 
   if (categoryTotals.length === 0) {
@@ -920,6 +950,7 @@ function renderLegend(categoryTotals) {
 }
 
 function drawChart(categoryTotals) {
+  if (!chartCanvas || !chartContext) return;
   const dpr = window.devicePixelRatio || 1;
   const width = chartCanvas.clientWidth || 720;
   const height = 280;
@@ -1789,12 +1820,16 @@ function getDefaultDateForPeriod(activePeriod) {
     return "";
   }
 
-  const today = new Date().toLocaleDateString("en-CA");
+  const today = getTodayDateInputValue();
   if (today.startsWith(activePeriod)) {
     return today;
   }
 
   return `${activePeriod}-01`;
+}
+
+function getTodayDateInputValue() {
+  return new Date().toLocaleDateString("en-CA");
 }
 
 function getNextMoneyDateLabel(salaryDate, splitwiseOweDate, splitwiseOwedDate) {
