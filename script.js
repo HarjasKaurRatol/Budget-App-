@@ -106,6 +106,7 @@ const chartLegend = document.querySelector("#chartLegend");
 const dailyChartCanvas = document.querySelector("#dailyChart");
 const dailyChartContext = dailyChartCanvas.getContext("2d");
 const dailyChartLegend = document.querySelector("#dailyChartLegend");
+const dailyChartTooltip = document.querySelector("#dailyChartTooltip");
 const monthlyPeriodLabel = document.querySelector("#monthlyPeriodLabel");
 const monthlyTotal = document.querySelector("#monthlyTotal");
 const monthlyPeak = document.querySelector("#monthlyPeak");
@@ -163,6 +164,7 @@ let saveStatusTimeout = null;
 let showAllExpenses = false;
 let categorySortDirection = "asc";
 let toastTimeout = null;
+let dailyBarHitAreas = [];
 let lastManualSaveSnapshot = serializeState(state);
 
 hydrateInputs();
@@ -272,6 +274,9 @@ categorySortButton.addEventListener("click", () => {
   categorySortButton.title = categorySortDirection === "asc" ? "Sort categories Z to A" : "Sort categories A to Z";
   renderExpenses();
 });
+
+dailyChartCanvas.addEventListener("mousemove", showDailyChartTooltip);
+dailyChartCanvas.addEventListener("mouseleave", hideDailyChartTooltip);
 
 treatModeInput.addEventListener("input", (event) => {
   state.treatMode = event.target.value;
@@ -1074,6 +1079,8 @@ function drawDailyChart(dailyTotals, dailyCategoryTotals) {
   dailyChartCanvas.height = height * dpr;
   dailyChartContext.setTransform(dpr, 0, 0, dpr, 0, 0);
   dailyChartContext.clearRect(0, 0, width, height);
+  dailyBarHitAreas = [];
+  hideDailyChartTooltip();
 
   if (!dailyTotals.length || dailyTotals.every((v) => v === 0)) {
     dailyChartLegend.innerHTML = "";
@@ -1144,6 +1151,18 @@ function drawDailyChart(dailyTotals, dailyCategoryTotals) {
         dailyChartContext.strokeRect(x - 1, y - 1, barWidth + 2, barHeight + 2);
       }
 
+      dailyBarHitAreas.push({
+        x,
+        y,
+        width: barWidth,
+        height: barHeight,
+        day,
+        total: amount,
+        categories: activeCategories
+          .map((category) => ({ category, amount: dailyCategoryTotals[index][category] || 0 }))
+          .filter((entry) => entry.amount > 0)
+      });
+
       if (barWidth >= 22) {
         dailyChartContext.fillStyle = isToday ? "#933a1f" : "#8b7d77";
         dailyChartContext.font = `${isToday ? "700" : "600"} 10px Manrope`;
@@ -1157,6 +1176,41 @@ function drawDailyChart(dailyTotals, dailyCategoryTotals) {
       dailyChartContext.fillText(String(day), x + barWidth / 2, height - padBottom + 16);
     }
   });
+}
+
+function showDailyChartTooltip(event) {
+  const rect = dailyChartCanvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  const hit = dailyBarHitAreas.find((bar) =>
+    x >= bar.x && x <= bar.x + bar.width && y >= bar.y && y <= bar.y + bar.height
+  );
+
+  if (!hit) {
+    hideDailyChartTooltip();
+    return;
+  }
+
+  dailyChartTooltip.innerHTML = `
+    <strong>Day ${hit.day}</strong>
+    ${hit.categories.map((entry) => {
+      const style = CATEGORY_STYLES[entry.category] || CATEGORY_STYLES.Other;
+      return `<span><i style="background:${style.color}"></i>${entry.category}: ${formatCurrency(entry.amount)}</span>`;
+    }).join("")}
+    <span class="daily-tooltip-total">Total: ${formatCurrency(hit.total)}</span>
+  `;
+  dailyChartTooltip.hidden = false;
+
+  const tooltipWidth = dailyChartTooltip.offsetWidth;
+  const tooltipHeight = dailyChartTooltip.offsetHeight;
+  const left = Math.min(Math.max(8, x + 12), rect.width - tooltipWidth - 8);
+  const top = Math.max(8, y - tooltipHeight - 12);
+  dailyChartTooltip.style.left = `${left}px`;
+  dailyChartTooltip.style.top = `${top}px`;
+}
+
+function hideDailyChartTooltip() {
+  dailyChartTooltip.hidden = true;
 }
 
 function getTopCategoryLabel(categoryTotals) {

@@ -815,6 +815,50 @@ button {
   border: 1px solid var(--line);
 }
 
+.daily-chart-wrap {
+  position: relative;
+}
+
+.daily-chart-tooltip {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  gap: 6px;
+  min-width: 150px;
+  padding: 10px 12px;
+  border: 1px solid rgba(72, 47, 40, 0.16);
+  border-radius: 12px;
+  background: rgba(35, 30, 28, 0.96);
+  box-shadow: 0 8px 24px rgba(35, 30, 28, 0.2);
+  color: #fff;
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+
+.daily-chart-tooltip[hidden] {
+  display: none;
+}
+
+.daily-chart-tooltip span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.daily-chart-tooltip i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+.daily-chart-tooltip .daily-tooltip-total {
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  font-weight: 800;
+}
+
 .daily-chart-legend {
   display: flex;
   flex-wrap: wrap;

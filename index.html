@@ -454,7 +454,10 @@
             <p id="monthlyPeriodLabel" class="supporting-text period-summary">Viewing all periods</p>
           </div>
         </div>
-        <canvas id="dailyChart" width="720" height="320" aria-label="Daily spending stacked by category"></canvas>
+        <div class="daily-chart-wrap">
+          <canvas id="dailyChart" width="720" height="320" aria-label="Daily spending stacked by category"></canvas>
+          <div id="dailyChartTooltip" class="daily-chart-tooltip" role="tooltip" hidden></div>
+        </div>
         <div id="dailyChartLegend" class="daily-chart-legend" aria-label="Daily spending categories"></div>
         <div class="stats-grid monthly-stats">
           <article class="stat-card">
