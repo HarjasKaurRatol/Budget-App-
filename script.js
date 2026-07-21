@@ -105,6 +105,7 @@ const chartContext = chartCanvas ? chartCanvas.getContext("2d") : null;
 const chartLegend = document.querySelector("#chartLegend");
 const dailyChartCanvas = document.querySelector("#dailyChart");
 const dailyChartContext = dailyChartCanvas.getContext("2d");
+const dailyChartLegend = document.querySelector("#dailyChartLegend");
 const monthlyPeriodLabel = document.querySelector("#monthlyPeriodLabel");
 const monthlyTotal = document.querySelector("#monthlyTotal");
 const monthlyPeak = document.querySelector("#monthlyPeak");
@@ -1026,9 +1027,27 @@ function getDailyTotals(expenses, activePeriod) {
   return totals;
 }
 
+function getDailyCategoryTotals(expenses, activePeriod) {
+  if (!activePeriod) return [];
+  const [year, month] = activePeriod.split("-").map(Number);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const totals = Array.from({ length: daysInMonth }, () => ({}));
+
+  expenses.forEach((expense) => {
+    if (!expense.date || !expense.amount) return;
+    const day = parseInt(expense.date.split("-")[2], 10);
+    if (day < 1 || day > daysInMonth) return;
+    totals[day - 1][expense.category] = (totals[day - 1][expense.category] || 0) + expense.amount;
+  });
+
+  return totals;
+}
+
 function updateMonthlyChart() {
-  const expenses = getFilteredExpenses(normalizeExpenses(state.expenses), state.activePeriod);
+  const expenses = getFilteredExpenses(normalizeExpenses(state.expenses), state.activePeriod)
+    .filter((expense) => expense.category !== "Income");
   const dailyTotals = getDailyTotals(expenses, state.activePeriod);
+  const dailyCategoryTotals = getDailyCategoryTotals(expenses, state.activePeriod);
 
   monthlyPeriodLabel.textContent = state.activePeriod ? `Viewing ${formatPeriodLabel(state.activePeriod)}` : "Viewing all periods";
 
@@ -1043,10 +1062,10 @@ function updateMonthlyChart() {
   monthlyAverage.textContent = formatCurrency(average);
   monthlyActiveDays.textContent = activeDays;
 
-  drawDailyChart(dailyTotals);
+  drawDailyChart(dailyTotals, dailyCategoryTotals);
 }
 
-function drawDailyChart(dailyTotals) {
+function drawDailyChart(dailyTotals, dailyCategoryTotals) {
   const dpr = window.devicePixelRatio || 1;
   const width = dailyChartCanvas.clientWidth || 720;
   const height = 320;
@@ -1057,11 +1076,20 @@ function drawDailyChart(dailyTotals) {
   dailyChartContext.clearRect(0, 0, width, height);
 
   if (!dailyTotals.length || dailyTotals.every((v) => v === 0)) {
+    dailyChartLegend.innerHTML = "";
     dailyChartContext.fillStyle = "#8b7d77";
     dailyChartContext.font = "600 16px Manrope";
     dailyChartContext.fillText("Add expenses to see your daily spending.", 24, 40);
     return;
   }
+
+  const activeCategories = CATEGORY_OPTIONS.filter((category) =>
+    category !== "Income" && dailyCategoryTotals.some((day) => (day[category] || 0) > 0)
+  );
+  dailyChartLegend.innerHTML = activeCategories.map((category) => {
+    const style = CATEGORY_STYLES[category] || CATEGORY_STYLES.Other;
+    return `<span class="daily-legend-item"><span class="daily-legend-swatch" style="background:${style.color}"></span>${category}</span>`;
+  }).join("");
 
   const today = new Date();
   const todayDay = today.getDate();
@@ -1096,13 +1124,25 @@ function drawDailyChart(dailyTotals) {
     const day = index + 1;
     const x = padLeft + index * (barWidth + barGap);
     const barHeight = amount > 0 ? Math.max(4, (amount / maxValue) * (chartHeight - 20)) : 0;
-    const y = padTop + chartHeight - barHeight;
     const isToday = isCurrentPeriod && day === todayDay;
 
     if (barHeight > 0) {
-      dailyChartContext.fillStyle = isToday ? "rgba(201, 95, 55, 0.9)" : "rgba(201, 95, 55, 0.35)";
-      roundRect(dailyChartContext, x, y, barWidth, barHeight, Math.min(8, barWidth / 2));
-      dailyChartContext.fill();
+      let stackBottom = padTop + chartHeight;
+      activeCategories.forEach((category) => {
+        const categoryAmount = dailyCategoryTotals[index][category] || 0;
+        if (!categoryAmount) return;
+        const segmentHeight = (categoryAmount / amount) * barHeight;
+        stackBottom -= segmentHeight;
+        dailyChartContext.fillStyle = (CATEGORY_STYLES[category] || CATEGORY_STYLES.Other).color;
+        dailyChartContext.fillRect(x, stackBottom, barWidth, segmentHeight + 0.5);
+      });
+
+      const y = padTop + chartHeight - barHeight;
+      if (isToday) {
+        dailyChartContext.strokeStyle = "#c95f37";
+        dailyChartContext.lineWidth = 2;
+        dailyChartContext.strokeRect(x - 1, y - 1, barWidth + 2, barHeight + 2);
+      }
 
       if (barWidth >= 22) {
         dailyChartContext.fillStyle = isToday ? "#933a1f" : "#8b7d77";
