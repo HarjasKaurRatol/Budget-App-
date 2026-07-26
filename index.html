@@ -114,27 +114,28 @@
               <input id="savingsInput" name="savings" type="number" min="0" step="0.01" placeholder="0.00" />
               <span class="balance-after-sheet">After sheet: <strong id="savingsNetDisplay">$0.00</strong></span>
             </label>
-            <label>
-              Chase payment left
-              <strong id="chaseCardTotal" class="derived-value">$0.00</strong>
-              <small id="chaseCardHelper" class="field-helper">Sheet charges: $0.00. Total Chase due: $0.00.</small>
-            </label>
-            <label>
-              Chase bill due date
-              <input id="chaseDueDateInput" name="chaseDueDate" type="date" />
-              <span id="chaseDueHelper" class="due-date-helper"></span>
-            </label>
-            <label>
-              Zolve payment left
-              <strong id="zolveCardTotal" class="derived-value">$0.00</strong>
-              <small id="zolveCardHelper" class="field-helper">Sheet charges: $0.00. Total Zolve due: $0.00.</small>
-            </label>
-            <label>
-              Zolve bill due date
-              <input id="zolveDueDateInput" name="zolveDueDate" type="date" />
-              <span id="zolveDueHelper" class="due-date-helper"></span>
-            </label>
           </form>
+
+          <div id="cardsContainer" class="cards-container"></div>
+          <template id="cardRowTemplate">
+            <div data-card-entry class="card-entry">
+              <label>
+                <span data-card-name-label></span> payment left
+                <strong data-card-total class="derived-value">$0.00</strong>
+                <small data-card-helper class="field-helper"></small>
+              </label>
+              <label>
+                <span data-card-name-label></span> bill due date
+                <input data-card-due-input type="date" />
+                <span data-card-due-helper class="due-date-helper"></span>
+              </label>
+              <button data-card-delete type="button" class="ghost-button small-button">Remove card</button>
+            </div>
+          </template>
+          <div class="add-card-row">
+            <input id="newCardNameInput" type="text" placeholder="New card name" />
+            <button id="addCardBtn" type="button" class="secondary-button small-button">Add card</button>
+          </div>
 
           <div class="stats-grid accounts-stats">
             <article class="stat-card">

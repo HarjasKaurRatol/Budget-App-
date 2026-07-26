@@ -1971,7 +1971,7 @@ function updatePaymentRowState(type, cardSelect) {
   cardSelect.style.opacity = isCardPayment ? "1" : "0.5";
 
   if (!isCardPayment) {
-    cardSelect.value = "Chase";
+    cardSelect.value = getPaymentCardOptions()[0] || "";
   }
 }
 

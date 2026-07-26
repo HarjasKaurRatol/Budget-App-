@@ -229,6 +229,31 @@ h2 {
   gap: 14px;
 }
 
+.cards-container {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.card-entry {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
+}
+
+.add-card-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.add-card-row input {
+  flex: 1;
+}
+
 .toggle-label {
   display: flex;
   align-items: center;
