@@ -845,15 +845,19 @@ function updateSummary() {
   totalCash.textContent = formatCurrency(totalCashValue);
   totalMoneyLeft.textContent = formatCurrency(totalMoneyLeftValue);
   if (visualTotalMoneyLeft) visualTotalMoneyLeft.textContent = formatCurrency(totalMoneyLeftValue);
-  chaseCardTotal.textContent = formatCurrency(totalChaseDueValue);
-  zolveCardTotal.textContent = formatCurrency(totalZolveDueValue);
   transferTotal.textContent = formatCurrency(transferPlannedValue);
   paymentsTotal.textContent = formatCurrency(totalPaymentsRecordedValue);
   plannedFromChecking.textContent = formatCurrency(checkingExpenses);
   totalCardPayments.textContent = formatCurrency(totalCardPaymentsValue);
   checkingAfterCards.textContent = formatCurrency(safeToSpendValue);
-  chaseCardHelper.textContent = `Sheet charges: ${formatCurrency(chaseSheetCharges)}. Paid: ${formatCurrency(chasePaidValue)}. Remaining: ${formatCurrency(totalChaseDueValue)}.`;
-  zolveCardHelper.textContent = `Sheet charges: ${formatCurrency(zolveSheetCharges)}. Paid: ${formatCurrency(zolvePaidValue)}. Remaining: ${formatCurrency(totalZolveDueValue)}.`;
+  const cardRows = cardsContainer.querySelectorAll("[data-card-entry]");
+  cardStats.forEach((card, index) => {
+    const row = cardRows[index];
+    if (!row) return;
+    row.querySelector("[data-card-total]").textContent = formatCurrency(card.dueValue);
+    row.querySelector("[data-card-helper]").textContent = `Sheet charges: ${formatCurrency(card.sheetCharges)}. Paid: ${formatCurrency(card.paidValue)}. Remaining: ${formatCurrency(card.dueValue)}.`;
+    updateCardDueHelper(row.querySelector("[data-card-due-helper]"), card.dueDate);
+  });
   incomingSoon.textContent = formatCurrency(salaryAmount);
   splitwiseIncoming.textContent = formatCurrency(splitwiseOwedAmount);
   settlementDue.textContent = formatCurrency(splitwiseOweAmount);
@@ -865,8 +869,6 @@ function updateSummary() {
   afterPurchase.textContent = formatCurrency(afterPurchaseValue);
   purchaseImpactText.textContent = `Total money left minus this purchase: ${formatCurrency(totalMoneyLeftValue)} - ${formatCurrency(purchaseAmount)}.`;
   nextBill.textContent = getNextBillLabel(expenses);
-  updateCardDueHelper(chaseDueHelper, state.chaseDueDate);
-  updateCardDueHelper(zolveDueHelper, state.zolveDueDate);
   totalIncome.textContent = formatCurrency(totalIncomeValue);
   checkingNetDisplay.textContent = formatCurrency(checking + checkingIncome - checkingExpenses);
   savingsNetDisplay.textContent = formatCurrency(savings + savingsIncome - savingsExpenses);
@@ -1374,6 +1376,7 @@ function loadState() {
       splitwiseOwedDate: parsed.splitwiseOwedDate ?? "",
       activePeriod: typeof parsed.activePeriod === "string" ? parsed.activePeriod : getCurrentPeriod(),
       budgetCaps: normalizeBudgetCaps(parsed.budgetCaps),
+      cards: normalizeCards(parsed.cards, parsed),
       treatMode: TREAT_MODES[parsed.treatMode] ? parsed.treatMode : "Balanced",
       treatEnabled: parsed.treatEnabled !== false,
       expenses: Array.isArray(parsed.expenses) ? parsed.expenses.map((expense) => ({
@@ -1403,7 +1406,7 @@ function createPaymentEntry(overrides = {}) {
     id: createId(),
     date: "",
     type: "Savings to Checking",
-    card: "Chase",
+    card: getCardNames()[0] || "Chase",
     amount: "",
     ...overrides
   };
@@ -1423,11 +1426,36 @@ function cloneDefaultState() {
     ...defaultState,
     activePeriod: defaultState.activePeriod || getCurrentPeriod(),
     budgetCaps: (defaultState.budgetCaps || []).map((entry) => ({ ...entry })),
+    cards: (defaultState.cards || []).map((card) => ({ ...card })),
     treatMode: TREAT_MODES[defaultState.treatMode] ? defaultState.treatMode : "Balanced",
     treatEnabled: defaultState.treatEnabled !== false,
     paymentEntries: (defaultState.paymentEntries || []).map((entry) => ({ ...entry })),
     expenses: defaultState.expenses.map((expense) => ({ ...expense }))
   };
+}
+
+function normalizeCards(cardsInput, legacyData = {}) {
+  const list = Array.isArray(cardsInput) ? cardsInput : [];
+  const seen = new Set();
+  const cards = list
+    .map((card) => ({
+      name: String((card && card.name) || "").trim(),
+      dueDate: (card && card.dueDate) || ""
+    }))
+    .filter((card) => {
+      if (!card.name || seen.has(card.name.toLowerCase())) return false;
+      seen.add(card.name.toLowerCase());
+      return true;
+    });
+
+  if (cards.length > 0) {
+    return cards;
+  }
+
+  return [
+    { name: "Chase", dueDate: legacyData.chaseDueDate || "" },
+    { name: "Zolve", dueDate: legacyData.zolveDueDate || "" }
+  ];
 }
 
 function createId() {
