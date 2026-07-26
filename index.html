@@ -12,6 +12,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <script src="auth.js"></script>
   </head>
   <body>
     <nav class="side-nav" aria-label="Quick actions">
@@ -88,6 +89,8 @@
         Wishlist
       </a>
       <a class="tab-btn" href="https://worth-it-lyart.vercel.app" target="_blank" rel="noopener noreferrer">Worth It</a>
+      <span class="tab-btn" id="currentUserLabel" style="cursor:default"></span>
+      <a class="tab-btn" href="#" id="logoutBtn">Logout</a>
     </div>
 
     <div class="page-shell">
@@ -534,6 +537,13 @@
       </div>
     </div>
 
+    <script>
+      document.getElementById("currentUserLabel").textContent = "Hi, " + window.BudgetAuth.userName;
+      document.getElementById("logoutBtn").addEventListener("click", function (e) {
+        e.preventDefault();
+        window.BudgetAuth.logout();
+      });
+    </script>
     <script type="module" src="script.js"></script>
   </body>
 </html>

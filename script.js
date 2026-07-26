@@ -12,7 +12,7 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
-const FIRESTORE_DOC = doc(db, "budget", "mydata");
+const FIRESTORE_DOC = doc(db, "budget", window.BudgetAuth.user);
 const STORAGE_KEY = "budget-snapshot-state";
 
 const CATEGORY_STYLES = {

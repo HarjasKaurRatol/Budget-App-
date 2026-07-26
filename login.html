@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign in</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0d0d0f; color: #f5f5f7; }
+      .card { background: #1a1a1d !important; border-color: #2a2a2e !important; }
+      input { background: #111 !important; color: #f5f5f7 !important; border-color: #333 !important; }
+      .user-btn { background: #111 !important; color: #f5f5f7 !important; border-color: #333 !important; }
+      .user-btn.active { background: #0071e3 !important; color: #fff !important; border-color: #0071e3 !important; }
+    }
+    .card {
+      width: 100%;
+      max-width: 320px;
+      padding: 32px 28px;
+      background: #fff;
+      border: 1px solid #e5e5e7;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    }
+    h1 { font-size: 1.15rem; margin: 0 0 20px; }
+    .user-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .user-btn {
+      flex: 1;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      background: #fff;
+      color: #1d1d1f;
+      cursor: pointer;
+    }
+    .user-btn.active {
+      background: #0071e3;
+      color: #fff;
+      border-color: #0071e3;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 1rem;
+      border: 1px solid #d2d2d7;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    button[type="submit"] {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      background: #0071e3;
+      color: #fff;
+      cursor: pointer;
+    }
+    button[type="submit"]:hover { background: #0077ed; }
+    .error {
+      color: #d92c2c;
+      font-size: 0.85rem;
+      margin: -6px 0 12px;
+      display: none;
+    }
+    .error.show { display: block; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Sign in</h1>
+    <div class="user-toggle" id="userToggle">
+      <button type="button" class="user-btn active" data-user="harjas">Harjas</button>
+      <button type="button" class="user-btn" data-user="ikjot">Ikjot</button>
+    </div>
+    <form id="loginForm">
+      <input type="password" id="passwordInput" placeholder="Password" autocomplete="current-password" autofocus required />
+      <button type="submit">Sign in</button>
+    </form>
+    <p class="error" id="errorMsg">Incorrect password.</p>
+  </div>
+  <script src="auth.js"></script>
+  <script>
+    var selectedUser = "harjas";
+    document.getElementById("userToggle").addEventListener("click", function (e) {
+      var btn = e.target.closest(".user-btn");
+      if (!btn) return;
+      selectedUser = btn.dataset.user;
+      document.querySelectorAll(".user-btn").forEach(function (b) {
+        b.classList.toggle("active", b === btn);
+      });
+      document.getElementById("errorMsg").classList.remove("show");
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var password = document.getElementById("passwordInput").value;
+      var user = window.BudgetAuth.USERS[selectedUser];
+      if (user && user.password === password) {
+        localStorage.setItem(window.BudgetAuth.STORAGE_KEY, selectedUser);
+        var params = new URLSearchParams(location.search);
+        location.href = params.get("redirect") || "index.html";
+      } else {
+        document.getElementById("errorMsg").classList.add("show");
+      }
+    });
+  </script>
+</body>
+</html>
