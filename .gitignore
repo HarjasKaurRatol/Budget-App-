@@ -3,3 +3,6 @@ config.js
 
 # macOS
 .DS_Store
+._*
+.vercel
+.env*
