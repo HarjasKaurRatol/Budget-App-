@@ -13,7 +13,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 const FIRESTORE_DOC = doc(db, "budget", window.BudgetAuth.user);
-const STORAGE_KEY = "budget-snapshot-state";
+const STORAGE_KEY = "budget-snapshot-state-" + window.BudgetAuth.user;
 
 const CATEGORY_STYLES = {
   Bills: { color: "#f7c9c1", text: "#8b1e1e" },

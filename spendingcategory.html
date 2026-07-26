@@ -77,10 +77,6 @@
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><rect x="3" y="12" width="4" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="10" y="7" width="4" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="17" y="3" width="4" height="18" rx="1" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
         Spending
       </a>
-      <a class="tab-btn" href="wishlist.html">
-        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" style="vertical-align:-2px;margin-right:5px"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-        Wishlist
-      </a>
       <span class="tab-btn" id="currentUserLabel" style="cursor:default"></span>
       <a class="tab-btn" href="#" id="logoutBtn">Logout</a>
     </div>
@@ -160,7 +156,7 @@
 
       const db = getFirestore(initializeApp(firebaseConfig));
       const FIRESTORE_DOC = doc(db, "budget", window.BudgetAuth.user);
-      const STORAGE_KEY = "budget-snapshot-state";
+      const STORAGE_KEY = "budget-snapshot-state-" + window.BudgetAuth.user;
       const SAFETY_BUFFER = 600;
 
       const CATEGORY_STYLES = {
@@ -179,7 +175,16 @@
       };
 
       const CATEGORY_OPTIONS = Object.keys(CATEGORY_STYLES);
-      const SOURCE_OPTIONS = ["Checking", "Savings", "Chase", "Zolve", "Cash"];
+
+      function getCardsSafe() {
+        return Array.isArray(state.cards) && state.cards.length
+          ? state.cards
+          : [{ name: "Chase" }, { name: "Zolve" }];
+      }
+
+      function getSourceOptions() {
+        return ["Checking", "Savings", ...getCardsSafe().map((card) => card.name), "Cash"];
+      }
 
       // DOM refs
       const chartCanvas = document.querySelector("#expenseChart");
@@ -270,15 +275,13 @@
 
         const checkingExpenses = spending.filter((e) => e.source === "Checking").reduce((s, e) => s + e.amount, 0);
         const checkingIncome = income.filter((e) => e.source === "Checking").reduce((s, e) => s + e.amount, 0);
-        const chaseCharges = spending.filter((e) => e.source === "Chase").reduce((s, e) => s + e.amount, 0);
-        const zolveCharges = spending.filter((e) => e.source === "Zolve").reduce((s, e) => s + e.amount, 0);
-        const chasePaid = payments.filter((e) => e.type === "Card Payment" && e.card === "Chase").reduce((s, e) => s + e.amount, 0);
-        const zolvePaid = payments.filter((e) => e.type === "Card Payment" && e.card === "Zolve").reduce((s, e) => s + e.amount, 0);
         const transferPlanned = payments.filter((e) => e.type === "Savings to Checking").reduce((s, e) => s + e.amount, 0);
 
-        const chaseDue = Math.max(0, chaseCharges - chasePaid);
-        const zolveDue = Math.max(0, zolveCharges - zolvePaid);
-        const totalCards = chaseDue + zolveDue;
+        const totalCards = getCardsSafe().reduce((sum, card) => {
+          const charges = spending.filter((e) => e.source === card.name).reduce((s, e) => s + e.amount, 0);
+          const paid = payments.filter((e) => e.type === "Card Payment" && e.card === card.name).reduce((s, e) => s + e.amount, 0);
+          return sum + Math.max(0, charges - paid);
+        }, 0);
         const totalMoneyLeft = checking + savings - totalCards - splitwiseOwe;
         const safeToSpend = checking + transferPlanned + checkingIncome - checkingExpenses - totalCards - splitwiseOwe;
         const totalExpensesValue = spending.reduce((s, e) => s + e.amount, 0) + splitwiseOwe;
@@ -443,8 +446,8 @@
       }
 
       function normalizeSource(source) {
-        if (SOURCE_OPTIONS.includes(source)) return source;
-        if (source === "Credit Card") return "Chase";
+        if (getSourceOptions().includes(source)) return source;
+        if (source === "Credit Card") return getCardsSafe()[0].name;
         return "Checking";
       }
 
