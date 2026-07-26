@@ -31,9 +31,19 @@ const CATEGORY_STYLES = {
 };
 
 const CATEGORY_OPTIONS = Object.keys(CATEGORY_STYLES);
-const SOURCE_OPTIONS = ["Checking", "Savings", "Chase", "Zolve", "Cash"];
+const FIXED_SOURCE_OPTIONS = ["Checking", "Savings"];
 const PAYMENT_TYPE_OPTIONS = ["Savings to Checking", "Card Payment"];
-const PAYMENT_CARD_OPTIONS = ["Chase", "Zolve"];
+function getCardNames() {
+  return state.cards.map((card) => card.name);
+}
+
+function getSourceOptions() {
+  return [...FIXED_SOURCE_OPTIONS, ...getCardNames(), "Cash"];
+}
+
+function getPaymentCardOptions() {
+  return getCardNames();
+}
 const SAFETY_BUFFER = 600;
 const TREAT_SAFETY_BUFFER = 300;
 const TREAT_MODES = {
@@ -57,8 +67,10 @@ const defaultState = {
   treatEnabled: true,
   purchaseName: "",
   purchaseAmount: "",
-  chaseDueDate: "",
-  zolveDueDate: "",
+  cards: [
+    { name: "Chase", dueDate: "" },
+    { name: "Zolve", dueDate: "" }
+  ],
   paymentEntries: [],
   expenses: [],
   wishlist: []
@@ -68,14 +80,10 @@ const state = loadState();
 
 const checkingInput = document.querySelector("#checkingInput");
 const savingsInput = document.querySelector("#savingsInput");
-const chaseCardTotal = document.querySelector("#chaseCardTotal");
-const zolveCardTotal = document.querySelector("#zolveCardTotal");
-const chaseCardHelper = document.querySelector("#chaseCardHelper");
-const zolveCardHelper = document.querySelector("#zolveCardHelper");
-const chaseDueDateInput = document.querySelector("#chaseDueDateInput");
-const zolveDueDateInput = document.querySelector("#zolveDueDateInput");
-const chaseDueHelper = document.querySelector("#chaseDueHelper");
-const zolveDueHelper = document.querySelector("#zolveDueHelper");
+const cardsContainer = document.querySelector("#cardsContainer");
+const cardRowTemplate = document.querySelector("#cardRowTemplate");
+const newCardNameInput = document.querySelector("#newCardNameInput");
+const addCardButton = document.querySelector("#addCardBtn");
 const salaryAmountInput = document.querySelector("#salaryAmountInput");
 const salaryDateInput = document.querySelector("#salaryDateInput");
 const splitwiseOweAmountInput = document.querySelector("#splitwiseOweAmountInput");
@@ -168,6 +176,7 @@ let dailyBarHitAreas = [];
 let lastManualSaveSnapshot = serializeState(state);
 
 hydrateInputs();
+renderCardsPanel();
 renderPeriodFilter();
 renderPaymentEntries();
 renderExpenses();
@@ -196,11 +205,13 @@ getDoc(FIRESTORE_DOC).then((snap) => {
     budgetCaps: normalizeBudgetCaps(data.budgetCaps),
     treatMode: TREAT_MODES[data.treatMode] ? data.treatMode : "Balanced",
     treatEnabled: data.treatEnabled !== false,
+    cards: normalizeCards(data.cards, data),
     expenses: firestoreExpenses.map((e) => ({ ...e, category: normalizeCategory(e) })),
     wishlist: Array.isArray(data.wishlist) ? data.wishlist : []
   });
   lastManualSaveSnapshot = serializeState(state);
   hydrateInputs();
+  renderCardsPanel();
   renderPeriodFilter();
   renderPaymentEntries();
   renderExpenses();
@@ -251,14 +262,19 @@ splitwiseOwedDateInput.addEventListener("input", (event) => {
   persistAndRefresh();
 });
 
-chaseDueDateInput.addEventListener("input", (event) => {
-  state.chaseDueDate = event.target.value;
-  persistAndRefresh();
-});
+addCardButton.addEventListener("click", () => {
+  const name = newCardNameInput.value.trim();
+  if (!name) return;
 
-zolveDueDateInput.addEventListener("input", (event) => {
-  state.zolveDueDate = event.target.value;
-  persistAndRefresh();
+  if (state.cards.some((card) => card.name.toLowerCase() === name.toLowerCase())) {
+    showToast("That card already exists.", "info");
+    return;
+  }
+
+  state.cards.push({ name, dueDate: "" });
+  newCardNameInput.value = "";
+  renderCardsPanel();
+  persistAndRefresh(true, true);
 });
 
 periodFilterInput.addEventListener("input", (event) => {
@@ -571,9 +587,44 @@ function hydrateInputs() {
   treatEnabledInput.checked = Boolean(state.treatEnabled);
   purchaseNameInput.value = state.purchaseName;
   purchaseAmountInput.value = state.purchaseAmount;
-  chaseDueDateInput.value = state.chaseDueDate || "";
-  zolveDueDateInput.value = state.zolveDueDate || "";
   updateScriptPreview();
+}
+
+function renderCardsPanel() {
+  cardsContainer.innerHTML = "";
+
+  state.cards.forEach((card) => {
+    const fragment = cardRowTemplate.content.cloneNode(true);
+    const row = fragment.querySelector("[data-card-entry]");
+
+    row.querySelectorAll("[data-card-name-label]").forEach((el) => {
+      el.textContent = card.name;
+    });
+
+    const dueInput = row.querySelector("[data-card-due-input]");
+    dueInput.value = card.dueDate || "";
+    dueInput.addEventListener("input", (event) => {
+      card.dueDate = event.target.value;
+      persistAndRefresh();
+    });
+
+    row.querySelector("[data-card-delete]").addEventListener("click", () => {
+      if (state.cards.length <= 1) {
+        showToast("You need at least one card.", "info");
+        return;
+      }
+
+      if (!confirm(`Remove ${card.name}? Past expenses and payments will keep the "${card.name}" label but won't count toward card totals anymore.`)) {
+        return;
+      }
+
+      state.cards = state.cards.filter((c) => c !== card);
+      renderCardsPanel();
+      persistAndRefresh(true, true);
+    });
+
+    cardsContainer.append(fragment);
+  });
 }
 
 function renderPaymentEntries() {
@@ -599,7 +650,7 @@ function renderPaymentEntries() {
     const removeButton = row.querySelector('[data-action="remove"]');
 
     fillSelect(fields.type, PAYMENT_TYPE_OPTIONS, entry.type);
-    fillSelect(fields.card, PAYMENT_CARD_OPTIONS, entry.card);
+    fillSelect(fields.card, getPaymentCardOptions(), entry.card);
     updatePaymentRowState(fields.type.value, fields.card);
 
     Object.entries(fields).forEach(([fieldName, input]) => {
@@ -684,7 +735,7 @@ function buildExpenseRow(expense) {
   const removeButton = row.querySelector('[data-action="remove"]');
 
   fillSelect(fields.category, CATEGORY_OPTIONS, expense.category);
-  fillSelect(fields.source, SOURCE_OPTIONS, expense.source);
+  fillSelect(fields.source, getSourceOptions(), expense.source);
 
   Object.entries(fields).forEach(([fieldName, input]) => {
     input.value = expense[fieldName] || "";
@@ -764,25 +815,21 @@ function updateSummary() {
   const savingsIncome = incomeRows
     .filter((e) => e.source === "Savings")
     .reduce((sum, e) => sum + e.amount, 0);
-  const chaseSheetCharges = spendingExpenses
-    .filter((expense) => expense.source === "Chase")
-    .reduce((sum, expense) => sum + expense.amount, 0);
-  const zolveSheetCharges = spendingExpenses
-    .filter((expense) => expense.source === "Zolve")
-    .reduce((sum, expense) => sum + expense.amount, 0);
   const transferPlannedValue = paymentEntries
     .filter((entry) => entry.type === "Savings to Checking")
     .reduce((sum, entry) => sum + entry.amount, 0);
-  const chasePaidValue = paymentEntries
-    .filter((entry) => entry.type === "Card Payment" && entry.card === "Chase")
-    .reduce((sum, entry) => sum + entry.amount, 0);
-  const zolvePaidValue = paymentEntries
-    .filter((entry) => entry.type === "Card Payment" && entry.card === "Zolve")
-    .reduce((sum, entry) => sum + entry.amount, 0);
-  const totalPaymentsRecordedValue = chasePaidValue + zolvePaidValue;
-  const totalChaseDueValue = Math.max(0, chaseSheetCharges - chasePaidValue);
-  const totalZolveDueValue = Math.max(0, zolveSheetCharges - zolvePaidValue);
-  const totalCardPaymentsValue = totalChaseDueValue + totalZolveDueValue;
+  const cardStats = state.cards.map((card) => {
+    const sheetCharges = spendingExpenses
+      .filter((expense) => expense.source === card.name)
+      .reduce((sum, expense) => sum + expense.amount, 0);
+    const paidValue = paymentEntries
+      .filter((entry) => entry.type === "Card Payment" && entry.card === card.name)
+      .reduce((sum, entry) => sum + entry.amount, 0);
+    const dueValue = Math.max(0, sheetCharges - paidValue);
+    return { ...card, sheetCharges, paidValue, dueValue };
+  });
+  const totalPaymentsRecordedValue = cardStats.reduce((sum, card) => sum + card.paidValue, 0);
+  const totalCardPaymentsValue = cardStats.reduce((sum, card) => sum + card.dueValue, 0);
   const totalMoneyLeftValue = totalCashValue - totalCardPaymentsValue - splitwiseOweAmount;
   const safeToSpendValue = checking + transferPlannedValue + checkingIncome - checkingExpenses - totalCardPaymentsValue - splitwiseOweAmount;
   const projectedAvailableValue = safeToSpendValue + salaryAmount + splitwiseOwedAmount;
@@ -1558,12 +1605,12 @@ function quoteValue(value) {
 }
 
 function normalizeSource(source) {
-  if (SOURCE_OPTIONS.includes(source)) {
+  if (getSourceOptions().includes(source)) {
     return source;
   }
 
   if (source === "Credit Card") {
-    return "Chase";
+    return getCardNames()[0] || "Checking";
   }
 
   return "Checking";
@@ -1588,7 +1635,7 @@ function normalizePaymentEntries(entries) {
     ...entry,
     amount: toNumber(entry.amount),
     type: PAYMENT_TYPE_OPTIONS.includes(entry.type) ? entry.type : "Savings to Checking",
-    card: PAYMENT_CARD_OPTIONS.includes(entry.card) ? entry.card : "Chase"
+    card: getPaymentCardOptions().includes(entry.card) ? entry.card : (getCardNames()[0] || "Chase")
   }));
 }
 
