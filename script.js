@@ -403,6 +403,11 @@ sideNavButtons.forEach((button) => {
       return;
     }
 
+    if (action === "cashback-calculator") {
+      openCashbackCalculator();
+      return;
+    }
+
     if (targetId) {
       const target = document.querySelector(`#${targetId}`);
       if (target) {
@@ -570,6 +575,45 @@ document.addEventListener("keydown", (e) => {
     calcState.display = calcState.display.length > 1 ? calcState.display.slice(0, -1) : "0";
     calcUpdateDisplay();
   }
+});
+
+// ─── Cashback calculator ──────────────────────────────────────────────────────
+
+const cashbackModal = document.querySelector("#cashbackModal");
+const cashbackAmountInput = document.querySelector("#cashbackAmountInput");
+const cashbackRateInput = document.querySelector("#cashbackRateInput");
+const cashbackResult = document.querySelector("#cashbackResult");
+const cashbackCloseButton = document.querySelector("#cashbackCloseButton");
+
+function openCashbackCalculator() {
+  if (cashbackModal) cashbackModal.classList.remove("hidden");
+}
+
+function closeCashbackCalculator() {
+  if (cashbackModal) cashbackModal.classList.add("hidden");
+}
+
+function updateCashbackResult() {
+  const amount = toNumber(cashbackAmountInput.value);
+  const rate = toNumber(cashbackRateInput.value);
+  cashbackResult.textContent = formatCurrency(amount * (rate / 100));
+}
+
+if (cashbackAmountInput) cashbackAmountInput.addEventListener("input", updateCashbackResult);
+if (cashbackRateInput) cashbackRateInput.addEventListener("input", updateCashbackResult);
+
+if (cashbackCloseButton) {
+  cashbackCloseButton.addEventListener("click", closeCashbackCalculator);
+}
+if (cashbackModal) {
+  cashbackModal.addEventListener("click", (e) => {
+    if (e.target === cashbackModal) closeCashbackCalculator();
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!cashbackModal || cashbackModal.classList.contains("hidden")) return;
+  if (e.key === "Escape") closeCashbackCalculator();
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

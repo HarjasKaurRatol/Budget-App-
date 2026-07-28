@@ -63,6 +63,13 @@
           <circle cx="15.5" cy="17.5" r="1.1" fill="currentColor"/>
         </svg>
       </button>
+      <button class="side-nav-item side-nav-icon" data-nav-action="cashback-calculator" type="button" aria-label="Cashback calculator" title="Cashback calculator">
+        <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="7" cy="7" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="17" cy="17" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          <path d="M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
         <button class="side-nav-item side-nav-icon" data-nav-action="save-data" type="button" aria-label="Save data" title="Save data">
         <svg class="side-nav-svg" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M5 3h11l3 3v15H5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
@@ -518,6 +525,31 @@
           <button class="calc-key calc-key-zero" data-action="digit" data-value="0">0</button>
           <button class="calc-key" data-action="decimal">.</button>
           <button class="calc-key calc-key-equals" data-action="equals">=</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="cashbackModal" class="calc-modal hidden" role="dialog" aria-label="Cashback calculator" aria-modal="true">
+      <div class="calc-panel">
+        <div class="calc-header">
+          <p class="section-tag" style="margin:0">Cashback calculator</p>
+          <button id="cashbackCloseButton" class="ghost-button small-button" type="button">Done</button>
+        </div>
+        <form class="stack-form">
+          <label>
+            Purchase amount
+            <input id="cashbackAmountInput" type="number" min="0" step="0.01" placeholder="0.00" />
+          </label>
+          <label>
+            Cashback rate (%)
+            <input id="cashbackRateInput" type="number" min="0" step="0.01" placeholder="2" />
+          </label>
+        </form>
+        <div class="stats-grid" style="margin-top: 16px">
+          <article class="stat-card accent-stat">
+            <span>Cashback earned</span>
+            <strong id="cashbackResult">$0.00</strong>
+          </article>
         </div>
       </div>
     </div>

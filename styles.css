@@ -965,10 +965,11 @@ button {
     margin-top: 0;
     writing-mode: horizontal-tb;
     transform: none;
-    flex: 0 0 58px;
-    padding: 10px 8px;
+    flex: 1 1 0;
+    padding: 10px 4px;
     min-height: 58px;
     min-width: 0;
+    max-width: 58px;
   }
 
   .page-shell {
