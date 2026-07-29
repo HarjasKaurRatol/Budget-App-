@@ -102,6 +102,7 @@
 
     <div class="page-shell">
       <main class="dashboard top-dashboard">
+        <div class="left-dashboard-stack">
         <section id="accountsSection" class="panel panel-accent balances-panel">
           <div class="panel-heading">
             <div>
@@ -173,6 +174,45 @@
             or any other expense category you want to watch.
           </p>
         </section>
+
+        <section id="subscriptionsSection" class="panel panel-accent subscriptions-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="section-tag">Subscriptions</p>
+              <h2>Recurring subscriptions</h2>
+            </div>
+            <button id="addSubscriptionBtn" class="secondary-button small-button" type="button">Add subscription</button>
+          </div>
+
+          <div id="subscriptionsContainer" class="subscriptions-container"></div>
+          <template id="subscriptionRowTemplate">
+            <div data-subscription-entry class="subscription-entry">
+              <label>
+                Name
+                <input data-subscription-name type="text" placeholder="Netflix, Spotify..." />
+              </label>
+              <label>
+                Monthly amount
+                <input data-subscription-amount type="number" min="0" step="0.01" placeholder="0.00" />
+              </label>
+              <label>
+                Renewal date
+                <input data-subscription-renewal type="date" />
+                <span data-subscription-renewal-helper class="due-date-helper"></span>
+              </label>
+              <button data-subscription-delete type="button" class="ghost-button small-button">Remove</button>
+            </div>
+          </template>
+
+          <div class="stats-grid accounts-stats">
+            <article class="stat-card accent-stat">
+              <span>Total monthly subscriptions</span>
+              <strong id="totalSubscriptions">$0.00</strong>
+            </article>
+          </div>
+        </section>
+
+        </div>
 
         <section id="expenseSheetSection" class="panel sheet-panel">
           <div class="panel-heading">

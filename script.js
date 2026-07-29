@@ -73,7 +73,8 @@ const defaultState = {
   ],
   paymentEntries: [],
   expenses: [],
-  wishlist: []
+  wishlist: [],
+  subscriptions: []
 };
 
 const state = loadState();
@@ -84,6 +85,10 @@ const cardsContainer = document.querySelector("#cardsContainer");
 const cardRowTemplate = document.querySelector("#cardRowTemplate");
 const newCardNameInput = document.querySelector("#newCardNameInput");
 const addCardButton = document.querySelector("#addCardBtn");
+const subscriptionsContainer = document.querySelector("#subscriptionsContainer");
+const subscriptionRowTemplate = document.querySelector("#subscriptionRowTemplate");
+const addSubscriptionButton = document.querySelector("#addSubscriptionBtn");
+const totalSubscriptionsEl = document.querySelector("#totalSubscriptions");
 const salaryAmountInput = document.querySelector("#salaryAmountInput");
 const salaryDateInput = document.querySelector("#salaryDateInput");
 const splitwiseOweAmountInput = document.querySelector("#splitwiseOweAmountInput");
@@ -177,6 +182,7 @@ let lastManualSaveSnapshot = serializeState(state);
 
 hydrateInputs();
 renderCardsPanel();
+renderSubscriptionsPanel();
 renderPeriodFilter();
 renderPaymentEntries();
 renderExpenses();
@@ -207,11 +213,13 @@ getDoc(FIRESTORE_DOC).then((snap) => {
     treatEnabled: data.treatEnabled !== false,
     cards: normalizeCards(data.cards, data),
     expenses: firestoreExpenses.map((e) => ({ ...e, category: normalizeCategory(e) })),
-    wishlist: Array.isArray(data.wishlist) ? data.wishlist : []
+    wishlist: Array.isArray(data.wishlist) ? data.wishlist : [],
+    subscriptions: normalizeSubscriptions(data.subscriptions)
   });
   lastManualSaveSnapshot = serializeState(state);
   hydrateInputs();
   renderCardsPanel();
+  renderSubscriptionsPanel();
   renderPeriodFilter();
   renderPaymentEntries();
   renderExpenses();
@@ -275,6 +283,12 @@ addCardButton.addEventListener("click", () => {
   newCardNameInput.value = "";
   renderCardsPanel();
   persistAndRefresh(true, true);
+});
+
+addSubscriptionButton.addEventListener("click", () => {
+  state.subscriptions.push({ id: createId(), name: "", amount: "", renewalDate: "" });
+  renderSubscriptionsPanel();
+  persistAndRefresh();
 });
 
 periodFilterInput.addEventListener("input", (event) => {
@@ -669,6 +683,55 @@ function renderCardsPanel() {
 
     cardsContainer.append(fragment);
   });
+}
+
+function updateSubscriptionsTotal() {
+  const total = state.subscriptions.reduce((sum, sub) => sum + toNumber(sub.amount), 0);
+  totalSubscriptionsEl.textContent = formatCurrency(total);
+}
+
+function renderSubscriptionsPanel() {
+  subscriptionsContainer.innerHTML = "";
+
+  state.subscriptions.forEach((sub) => {
+    const fragment = subscriptionRowTemplate.content.cloneNode(true);
+    const row = fragment.querySelector("[data-subscription-entry]");
+
+    const nameInput = row.querySelector("[data-subscription-name]");
+    nameInput.value = sub.name || "";
+    nameInput.addEventListener("input", (event) => {
+      sub.name = event.target.value;
+      persistAndRefresh();
+    });
+
+    const amountInput = row.querySelector("[data-subscription-amount]");
+    amountInput.value = sub.amount || "";
+    amountInput.addEventListener("input", (event) => {
+      sub.amount = event.target.value;
+      updateSubscriptionsTotal();
+      persistAndRefresh();
+    });
+
+    const renewalInput = row.querySelector("[data-subscription-renewal]");
+    const renewalHelper = row.querySelector("[data-subscription-renewal-helper]");
+    renewalInput.value = sub.renewalDate || "";
+    updateCardDueHelper(renewalHelper, sub.renewalDate);
+    renewalInput.addEventListener("input", (event) => {
+      sub.renewalDate = event.target.value;
+      updateCardDueHelper(renewalHelper, sub.renewalDate);
+      persistAndRefresh();
+    });
+
+    row.querySelector("[data-subscription-delete]").addEventListener("click", () => {
+      state.subscriptions = state.subscriptions.filter((s) => s !== sub);
+      renderSubscriptionsPanel();
+      persistAndRefresh();
+    });
+
+    subscriptionsContainer.append(fragment);
+  });
+
+  updateSubscriptionsTotal();
 }
 
 function renderPaymentEntries() {
@@ -1421,6 +1484,7 @@ function loadState() {
       activePeriod: typeof parsed.activePeriod === "string" ? parsed.activePeriod : getCurrentPeriod(),
       budgetCaps: normalizeBudgetCaps(parsed.budgetCaps),
       cards: normalizeCards(parsed.cards, parsed),
+      subscriptions: normalizeSubscriptions(parsed.subscriptions),
       treatMode: TREAT_MODES[parsed.treatMode] ? parsed.treatMode : "Balanced",
       treatEnabled: parsed.treatEnabled !== false,
       expenses: Array.isArray(parsed.expenses) ? parsed.expenses.map((expense) => ({
@@ -1471,11 +1535,22 @@ function cloneDefaultState() {
     activePeriod: defaultState.activePeriod || getCurrentPeriod(),
     budgetCaps: (defaultState.budgetCaps || []).map((entry) => ({ ...entry })),
     cards: (defaultState.cards || []).map((card) => ({ ...card })),
+    subscriptions: (defaultState.subscriptions || []).map((sub) => ({ ...sub })),
     treatMode: TREAT_MODES[defaultState.treatMode] ? defaultState.treatMode : "Balanced",
     treatEnabled: defaultState.treatEnabled !== false,
     paymentEntries: (defaultState.paymentEntries || []).map((entry) => ({ ...entry })),
     expenses: defaultState.expenses.map((expense) => ({ ...expense }))
   };
+}
+
+function normalizeSubscriptions(subscriptionsInput) {
+  const list = Array.isArray(subscriptionsInput) ? subscriptionsInput : [];
+  return list.map((sub) => ({
+    id: (sub && sub.id) || createId(),
+    name: String((sub && sub.name) || ""),
+    amount: (sub && sub.amount) ?? "",
+    renewalDate: (sub && sub.renewalDate) || ""
+  }));
 }
 
 function normalizeCards(cardsInput, legacyData = {}) {

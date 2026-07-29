@@ -198,9 +198,25 @@ h2 {
   min-height: 100%;
 }
 
-.lower-left-stack {
+.lower-left-stack,
+.left-dashboard-stack {
   display: grid;
   gap: 24px;
+}
+
+.subscriptions-container {
+  display: grid;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.subscription-entry {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--panel-strong);
+  border: 1px solid var(--line);
 }
 
 .panel-accent {
