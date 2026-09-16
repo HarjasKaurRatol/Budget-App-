@@ -44,7 +44,7 @@ function getSourceOptions() {
 function getPaymentCardOptions() {
   return getCardNames();
 }
-const SAFETY_BUFFER = 600;
+const DEFAULT_SAFETY_THRESHOLD = 600;
 const TREAT_SAFETY_BUFFER = 300;
 const TREAT_MODES = {
   Conservative: { percent: 0.05, cap: 25, cardThreshold: 0.25, label: "Small treat okay" },
@@ -55,6 +55,7 @@ const TREAT_MODES = {
 const defaultState = {
   checking: "",
   savings: "",
+  safetyThreshold: DEFAULT_SAFETY_THRESHOLD,
   salaryAmount: "",
   salaryDate: "",
   splitwiseOweAmount: "",
@@ -82,6 +83,7 @@ const state = loadState();
 
 const checkingInput = document.querySelector("#checkingInput");
 const savingsInput = document.querySelector("#savingsInput");
+const safetyThresholdInput = document.querySelector("#safetyThresholdInput");
 const cardsContainer = document.querySelector("#cardsContainer");
 const cardRowTemplate = document.querySelector("#cardRowTemplate");
 const newCardNameInput = document.querySelector("#newCardNameInput");
@@ -318,6 +320,11 @@ savingsInput.addEventListener("input", (event) => {
   persistAndRefresh();
 });
 savingsInput.addEventListener("keydown", (event) => handleBalanceInput("savings", event));
+
+safetyThresholdInput.addEventListener("input", (event) => {
+  state.safetyThreshold = event.target.value;
+  persistAndRefresh();
+});
 
 salaryAmountInput.addEventListener("input", (event) => {
   state.salaryAmount = event.target.value;
@@ -715,6 +722,7 @@ document.addEventListener("keydown", (e) => {
 function hydrateInputs() {
   checkingInput.value = state.checking;
   savingsInput.value = state.savings;
+  safetyThresholdInput.value = state.safetyThreshold ?? DEFAULT_SAFETY_THRESHOLD;
   salaryAmountInput.value = state.salaryAmount;
   salaryDateInput.value = state.salaryDate;
   splitwiseOweAmountInput.value = state.splitwiseOweAmount;
@@ -1138,7 +1146,8 @@ function updateHealthLabel(remaining) {
   if (!healthLabel) return;
   healthLabel.className = "";
 
-  if (remaining > SAFETY_BUFFER) {
+  const safetyThreshold = getSafetyThreshold();
+  if (remaining > safetyThreshold) {
     healthLabel.textContent = "You still have room after your checking expenses.";
     healthLabel.classList.add("good");
     return;
@@ -1164,19 +1173,20 @@ function updateDecision(purchaseAmount, afterPurchaseValue) {
 
   const itemName = state.purchaseName.trim() || "This purchase";
 
-  if (afterPurchaseValue > SAFETY_BUFFER) {
-    decisionText.textContent = `${itemName} still leaves you with a healthy cushion above your ${formatCurrency(SAFETY_BUFFER)} safety buffer.`;
+  const safetyThreshold = getSafetyThreshold();
+  if (afterPurchaseValue > safetyThreshold) {
+    decisionText.textContent = `${itemName} still leaves you with a healthy cushion above your ${formatCurrency(safetyThreshold)} safety buffer.`;
     decisionCard.classList.add("good");
     return;
   }
 
-  if (afterPurchaseValue >= SAFETY_BUFFER) {
-    decisionText.textContent = `${itemName} is possible, but it would leave you close to your ${formatCurrency(SAFETY_BUFFER)} safety buffer.`;
+  if (afterPurchaseValue >= safetyThreshold) {
+    decisionText.textContent = `${itemName} is possible, but it would leave you close to your ${formatCurrency(safetyThreshold)} safety buffer.`;
     decisionCard.classList.add("caution");
     return;
   }
 
-  decisionText.textContent = `${itemName} would push you below your ${formatCurrency(SAFETY_BUFFER)} safety buffer.`;
+  decisionText.textContent = `${itemName} would push you below your ${formatCurrency(safetyThreshold)} safety buffer.`;
   decisionCard.classList.add("bad");
 }
 
@@ -1720,6 +1730,11 @@ function createId() {
 function toNumber(value) {
   const amount = Number.parseFloat(value);
   return Number.isFinite(amount) ? amount : 0;
+}
+
+function getSafetyThreshold() {
+  const threshold = Number.parseFloat(state.safetyThreshold);
+  return Number.isFinite(threshold) && threshold >= 0 ? threshold : DEFAULT_SAFETY_THRESHOLD;
 }
 
 function formatCurrency(value) {
