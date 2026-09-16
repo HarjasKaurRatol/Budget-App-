@@ -74,7 +74,8 @@ const defaultState = {
   paymentEntries: [],
   expenses: [],
   wishlist: [],
-  subscriptions: []
+  subscriptions: [],
+  notes: ""
 };
 
 const state = loadState();
@@ -89,6 +90,11 @@ const subscriptionsContainer = document.querySelector("#subscriptionsContainer")
 const subscriptionRowTemplate = document.querySelector("#subscriptionRowTemplate");
 const addSubscriptionButton = document.querySelector("#addSubscriptionBtn");
 const totalSubscriptionsEl = document.querySelector("#totalSubscriptions");
+const subscriptionTotalDisplay = document.querySelector("#subscriptionTotalDisplay");
+const notesInput = document.querySelector("#notesInput");
+const clearNotesButton = document.querySelector("#clearNotesButton");
+const notesModal = document.querySelector("#notesModal");
+const notesCloseButton = document.querySelector("#notesCloseButton");
 const salaryAmountInput = document.querySelector("#salaryAmountInput");
 const salaryDateInput = document.querySelector("#salaryDateInput");
 const splitwiseOweAmountInput = document.querySelector("#splitwiseOweAmountInput");
@@ -130,6 +136,7 @@ const totalCash = document.querySelector("#totalCash");
 const totalMoneyLeft = document.querySelector("#totalMoneyLeft");
 const plannedFromChecking = document.querySelector("#plannedFromChecking");
 const totalCardPayments = document.querySelector("#totalCardPayments");
+const creditCardBillTotalText = document.querySelector("#creditCardBillTotalText");
 const checkingAfterCards = document.querySelector("#checkingAfterCards");
 const incomingSoon = document.querySelector("#incomingSoon");
 const splitwiseIncoming = document.querySelector("#splitwiseIncoming");
@@ -187,6 +194,39 @@ renderPeriodFilter();
 renderPaymentEntries();
 renderExpenses();
 updateSummary();
+
+notesInput.addEventListener("input", (event) => {
+  state.notes = event.target.value;
+  persistAndRefresh();
+});
+
+clearNotesButton.addEventListener("click", () => {
+  if (!state.notes) return;
+  state.notes = "";
+  hydrateInputs();
+  persistAndRefresh();
+  notesInput.focus();
+});
+
+function openNotes() {
+  notesModal.classList.remove("hidden");
+  notesInput.focus();
+}
+
+function closeNotes() {
+  notesModal.classList.add("hidden");
+}
+
+notesCloseButton.addEventListener("click", closeNotes);
+notesModal.addEventListener("click", (event) => {
+  if (event.target === notesModal) closeNotes();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (!notesModal.classList.contains("hidden") && event.key === "Escape") {
+    closeNotes();
+  }
+});
 
 if (saveStatus) {
   saveStatus.textContent = "Syncing with cloud…";
@@ -422,6 +462,11 @@ sideNavButtons.forEach((button) => {
       return;
     }
 
+    if (action === "notes") {
+      openNotes();
+      return;
+    }
+
     if (targetId) {
       const target = document.querySelector(`#${targetId}`);
       if (target) {
@@ -645,6 +690,7 @@ function hydrateInputs() {
   treatEnabledInput.checked = Boolean(state.treatEnabled);
   purchaseNameInput.value = state.purchaseName;
   purchaseAmountInput.value = state.purchaseAmount;
+  notesInput.value = state.notes || "";
   updateScriptPreview();
 }
 
@@ -687,7 +733,11 @@ function renderCardsPanel() {
 
 function updateSubscriptionsTotal() {
   const total = state.subscriptions.reduce((sum, sub) => sum + toNumber(sub.amount), 0);
-  totalSubscriptionsEl.textContent = formatCurrency(total);
+  const formattedTotal = formatCurrency(total);
+  totalSubscriptionsEl.textContent = formattedTotal;
+  if (subscriptionTotalDisplay) {
+    subscriptionTotalDisplay.textContent = `${formattedTotal} total`;
+  }
 }
 
 function renderSubscriptionsPanel() {
@@ -956,6 +1006,9 @@ function updateSummary() {
   paymentsTotal.textContent = formatCurrency(totalPaymentsRecordedValue);
   plannedFromChecking.textContent = formatCurrency(checkingExpenses);
   totalCardPayments.textContent = formatCurrency(totalCardPaymentsValue);
+  if (creditCardBillTotalText) {
+    creditCardBillTotalText.textContent = `Total due: ${formatCurrency(totalCardPaymentsValue)}`;
+  }
   checkingAfterCards.textContent = formatCurrency(safeToSpendValue);
   const cardRows = cardsContainer.querySelectorAll("[data-card-entry]");
   cardStats.forEach((card, index) => {
