@@ -740,6 +740,13 @@ function renderCardsPanel() {
       el.textContent = card.name;
     });
 
+    const statementInput = row.querySelector("[data-card-statement-input]");
+    statementInput.value = card.statementBalance || "";
+    statementInput.addEventListener("input", (event) => {
+      card.statementBalance = event.target.value;
+      persistAndRefresh();
+    });
+
     const dueInput = row.querySelector("[data-card-due-input]");
     dueInput.value = card.dueDate || "";
     dueInput.addEventListener("input", (event) => {
@@ -1085,7 +1092,7 @@ function updateSummary() {
     const row = cardRows[index];
     if (!row) return;
     row.querySelector("[data-card-total]").textContent = formatCurrency(card.dueValue);
-    row.querySelector("[data-card-helper]").textContent = `Sheet charges: ${formatCurrency(card.sheetCharges)}. Paid: ${formatCurrency(card.paidValue)}. Remaining: ${formatCurrency(card.dueValue)}.`;
+    row.querySelector("[data-card-helper]").textContent = `Live balance: charges ${formatCurrency(card.sheetCharges)} - payments ${formatCurrency(card.paidValue)}. Statement: ${formatCurrency(toNumber(card.statementBalance))}.`;
     updateCardDueHelper(row.querySelector("[data-card-due-helper]"), card.dueDate);
   });
   incomingSoon.textContent = formatCurrency(salaryAmount);
@@ -1682,7 +1689,8 @@ function normalizeCards(cardsInput, legacyData = {}) {
   const cards = list
     .map((card) => ({
       name: String((card && card.name) || "").trim(),
-      dueDate: (card && card.dueDate) || ""
+      dueDate: (card && card.dueDate) || "",
+      statementBalance: (card && card.statementBalance) ?? ""
     }))
     .filter((card) => {
       if (!card.name || seen.has(card.name.toLowerCase())) return false;
@@ -1695,8 +1703,8 @@ function normalizeCards(cardsInput, legacyData = {}) {
   }
 
   return [
-    { name: "Chase", dueDate: legacyData.chaseDueDate || "" },
-    { name: "Zolve", dueDate: legacyData.zolveDueDate || "" }
+    { name: "Chase", dueDate: legacyData.chaseDueDate || "", statementBalance: "" },
+    { name: "Zolve", dueDate: legacyData.zolveDueDate || "", statementBalance: "" }
   ];
 }
 

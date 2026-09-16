@@ -134,7 +134,12 @@
           <template id="cardRowTemplate">
             <div data-card-entry class="card-entry">
               <label>
-                <span data-card-name-label></span> payment left
+                <span data-card-name-label></span> statement balance
+                <small class="field-helper">Closed billing cycle amount</small>
+                <input data-card-statement-input type="number" min="0" step="0.01" placeholder="0.00" />
+              </label>
+              <label>
+                <span data-card-name-label></span> current balance
                 <strong data-card-total class="derived-value">$0.00</strong>
                 <small data-card-helper class="field-helper"></small>
               </label>
@@ -146,6 +151,9 @@
               <button data-card-delete type="button" class="ghost-button small-button">Remove card</button>
             </div>
           </template>
+          <p class="supporting-text card-balance-explainer">
+            Statement balance is the fixed amount from a closed billing cycle. Current balance is the live total after posted charges and payments.
+          </p>
           <div class="add-card-row">
             <input id="newCardNameInput" type="text" placeholder="New card name" />
             <button id="addCardBtn" type="button" class="secondary-button small-button">Add card</button>
@@ -166,7 +174,7 @@
               <strong id="plannedFromChecking">$0.00</strong>
             </article>
             <article class="stat-card">
-              <span>Total card payments left</span>
+              <span>Total current card balances</span>
               <strong id="totalCardPayments">$0.00</strong>
               <small id="creditCardBillTotalText" class="stat-caption">Total due: $0.00</small>
             </article>
