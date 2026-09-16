@@ -267,15 +267,52 @@ getDoc(FIRESTORE_DOC).then((snap) => {
   showToast("Could not load cloud data: " + (err?.message ?? err), "info");
 });
 
+function evaluateArithmeticExpression(value) {
+  const expression = value.replace(/\s+/g, "");
+  if (!/^[\d.+*/()-]+$/.test(expression)) return null;
+
+  const numbers = expression.split(/[+*/()-]/).filter(Boolean).map(Number);
+  const operators = expression.match(/[+*/-]/g) || [];
+  if (!numbers.length || numbers.some((number) => !Number.isFinite(number)) || operators.length !== numbers.length - 1) {
+    return null;
+  }
+
+  let result = numbers[0];
+  operators.forEach((operator, index) => {
+    const number = numbers[index + 1];
+    if (operator === "+") result += number;
+    if (operator === "-") result -= number;
+    if (operator === "*") result *= number;
+    if (operator === "/") result = number === 0 ? NaN : result / number;
+  });
+
+  return Number.isFinite(result) ? Number(result.toFixed(2)) : null;
+}
+
+function handleBalanceInput(field, event) {
+  if (event.key !== "Enter") return;
+
+  const result = evaluateArithmeticExpression(event.target.value);
+  if (result !== null) {
+    event.preventDefault();
+    event.target.value = String(result);
+  }
+
+  state[field] = event.target.value;
+  persistAndRefresh();
+}
+
 checkingInput.addEventListener("input", (event) => {
   state.checking = event.target.value;
   persistAndRefresh();
 });
+checkingInput.addEventListener("keydown", (event) => handleBalanceInput("checking", event));
 
 savingsInput.addEventListener("input", (event) => {
   state.savings = event.target.value;
   persistAndRefresh();
 });
+savingsInput.addEventListener("keydown", (event) => handleBalanceInput("savings", event));
 
 salaryAmountInput.addEventListener("input", (event) => {
   state.salaryAmount = event.target.value;
