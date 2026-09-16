@@ -242,9 +242,19 @@
             <table class="expense-table">
               <thead>
                 <tr>
-                  <th>Date</th>
+                  <th id="dateSortHeader" aria-sort="none">
+                    <button id="dateSortButton" class="table-sort-button" type="button" aria-label="Sort dates" title="Sort dates">
+                      <span>Date</span>
+                      <span class="sort-arrow" aria-hidden="true"></span>
+                    </button>
+                  </th>
                   <th>Description</th>
-                  <th>Amount</th>
+                  <th id="amountSortHeader" aria-sort="none">
+                    <button id="amountSortButton" class="table-sort-button" type="button" aria-label="Sort amounts" title="Sort amounts">
+                      <span>Amount</span>
+                      <span class="sort-arrow" aria-hidden="true"></span>
+                    </button>
+                  </th>
                       <th>Category</th>
                   <th>Paid from</th>
                   <th></th>

@@ -117,6 +117,10 @@ const paymentTableBody = document.querySelector("#paymentTableBody");
 const paymentRowTemplate = document.querySelector("#paymentRowTemplate");
 const expenseTableBody = document.querySelector("#expenseTableBody");
 const expenseRowTemplate = document.querySelector("#expenseRowTemplate");
+const dateSortHeader = document.querySelector("#dateSortHeader");
+const dateSortButton = document.querySelector("#dateSortButton");
+const amountSortHeader = document.querySelector("#amountSortHeader");
+const amountSortButton = document.querySelector("#amountSortButton");
 const chartCanvas = document.querySelector("#expenseChart");
 const chartContext = chartCanvas ? chartCanvas.getContext("2d") : null;
 const chartLegend = document.querySelector("#chartLegend");
@@ -180,6 +184,7 @@ const aiBetterWhy = document.querySelector("#aiBetterWhy");
 
 let saveStatusTimeout = null;
 let showAllExpenses = false;
+let expenseSort = { field: null, direction: null };
 let toastTimeout = null;
 let dailyBarHitAreas = [];
 let lastManualSaveSnapshot = serializeState(state);
@@ -370,6 +375,10 @@ periodFilterInput.addEventListener("input", (event) => {
   showAllExpenses = false;
   persistAndRefresh(true);
 });
+
+dateSortButton.addEventListener("click", () => cycleExpenseSort("date"));
+amountSortButton.addEventListener("click", () => cycleExpenseSort("amount"));
+updateExpenseSortControls();
 
 dailyChartCanvas.addEventListener("mousemove", showDailyChartTooltip);
 dailyChartCanvas.addEventListener("mouseleave", hideDailyChartTooltip);
@@ -884,10 +893,19 @@ function renderExpenses() {
   const recentRows = dateSorted.filter((e) => !e.date || recentSet.has(e.date));
   const olderRows = dateSorted.filter((e) => e.date && !recentSet.has(e.date));
 
-  const toRender = (showAllExpenses ? dateSorted : recentRows).sort((a, b) => {
-    const comparison = (a.category || "").localeCompare(b.category || "", undefined, { sensitivity: "base" });
-    return comparison;
-  });
+  const toRender = showAllExpenses ? [...visibleExpenses] : [...recentRows];
+  if (expenseSort.field) {
+    toRender.sort((a, b) => {
+      let comparison;
+      if (expenseSort.field === "date") {
+        comparison = (a.date || "").localeCompare(b.date || "");
+      } else {
+        comparison = toNumber(a.amount) - toNumber(b.amount);
+      }
+
+      return expenseSort.direction === "asc" ? comparison : -comparison;
+    });
+  }
 
   toRender.forEach((expense) => {
     expenseTableBody.append(buildExpenseRow(expense));
@@ -903,6 +921,32 @@ function renderExpenses() {
     });
     expenseTableBody.append(toggleRow);
   }
+}
+
+function cycleExpenseSort(field) {
+  if (expenseSort.field !== field) {
+    expenseSort = { field, direction: "asc" };
+  } else if (expenseSort.direction === "asc") {
+    expenseSort.direction = "desc";
+  } else {
+    expenseSort = { field: null, direction: null };
+  }
+
+  updateExpenseSortControls();
+  renderExpenses();
+}
+
+function updateExpenseSortControls() {
+  [
+    [dateSortHeader, dateSortButton, "date"],
+    [amountSortHeader, amountSortButton, "amount"]
+  ].forEach(([header, button, field]) => {
+    const active = expenseSort.field === field;
+    const direction = active ? expenseSort.direction : "none";
+    header.setAttribute("aria-sort", direction === "asc" ? "ascending" : direction === "desc" ? "descending" : "none");
+    button.setAttribute("aria-label", active ? `Sort ${field === "date" ? "dates" : "amounts"} ${direction === "asc" ? "descending" : "ascending"}` : `Sort ${field === "date" ? "dates" : "amounts"}`);
+    button.title = button.getAttribute("aria-label");
+  });
 }
 
 function buildExpenseRow(expense) {
