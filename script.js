@@ -45,6 +45,7 @@ function getPaymentCardOptions() {
   return getCardNames();
 }
 const DEFAULT_SAFETY_THRESHOLD = 600;
+const DEFAULT_LOW_BALANCE_THRESHOLD = 850;
 const TREAT_SAFETY_BUFFER = 300;
 const TREAT_MODES = {
   Conservative: { percent: 0.05, cap: 25, cardThreshold: 0.25, label: "Small treat okay" },
@@ -56,6 +57,7 @@ const defaultState = {
   checking: "",
   savings: "",
   safetyThreshold: DEFAULT_SAFETY_THRESHOLD,
+  lowBalanceThreshold: DEFAULT_LOW_BALANCE_THRESHOLD,
   salaryAmount: "",
   salaryDate: "",
   splitwiseOweAmount: "",
@@ -84,6 +86,7 @@ const state = loadState();
 const checkingInput = document.querySelector("#checkingInput");
 const savingsInput = document.querySelector("#savingsInput");
 const safetyThresholdInput = document.querySelector("#safetyThresholdInput");
+const lowBalanceThresholdInput = document.querySelector("#lowBalanceThresholdInput");
 const cardsContainer = document.querySelector("#cardsContainer");
 const cardRowTemplate = document.querySelector("#cardRowTemplate");
 const newCardNameInput = document.querySelector("#newCardNameInput");
@@ -167,7 +170,6 @@ const decisionText = document.querySelector("#decisionText");
 const decisionCard = document.querySelector("#decisionCard");
 const lowBalanceWarning = document.querySelector("#lowBalanceWarning");
 const lowBalanceMessage = document.querySelector("#lowBalanceMessage");
-const LOW_BALANCE_THRESHOLD = 850;
 const treatBudget = document.querySelector("#treatBudget");
 const treatStatus = document.querySelector("#treatStatus");
 const treatReason = document.querySelector("#treatReason");
@@ -323,6 +325,11 @@ savingsInput.addEventListener("keydown", (event) => handleBalanceInput("savings"
 
 safetyThresholdInput.addEventListener("input", (event) => {
   state.safetyThreshold = event.target.value;
+  persistAndRefresh();
+});
+
+lowBalanceThresholdInput.addEventListener("input", (event) => {
+  state.lowBalanceThreshold = event.target.value;
   persistAndRefresh();
 });
 
@@ -723,6 +730,7 @@ function hydrateInputs() {
   checkingInput.value = state.checking;
   savingsInput.value = state.savings;
   safetyThresholdInput.value = state.safetyThreshold ?? DEFAULT_SAFETY_THRESHOLD;
+  lowBalanceThresholdInput.value = state.lowBalanceThreshold ?? DEFAULT_LOW_BALANCE_THRESHOLD;
   salaryAmountInput.value = state.salaryAmount;
   salaryDateInput.value = state.salaryDate;
   splitwiseOweAmountInput.value = state.splitwiseOweAmount;
@@ -1125,8 +1133,9 @@ function updateSummary() {
   updateAiTreatCard(treatPlan.budget, state.purchaseName);
   if (periodSummary) periodSummary.textContent = state.activePeriod ? `Viewing ${formatPeriodLabel(state.activePeriod)}` : "Viewing all periods";
 
-  if (totalMoneyLeftValue < LOW_BALANCE_THRESHOLD) {
-    lowBalanceMessage.textContent = `Total money left is ${formatCurrency(totalMoneyLeftValue)} — below your $850 safety threshold.`;
+  const lowBalanceThreshold = getLowBalanceThreshold();
+  if (totalMoneyLeftValue < lowBalanceThreshold) {
+    lowBalanceMessage.textContent = `Total money left is ${formatCurrency(totalMoneyLeftValue)} — below your ${formatCurrency(lowBalanceThreshold)} safety threshold.`;
     lowBalanceWarning.classList.remove("hidden");
   } else {
     lowBalanceWarning.classList.add("hidden");
@@ -1735,6 +1744,11 @@ function toNumber(value) {
 function getSafetyThreshold() {
   const threshold = Number.parseFloat(state.safetyThreshold);
   return Number.isFinite(threshold) && threshold >= 0 ? threshold : DEFAULT_SAFETY_THRESHOLD;
+}
+
+function getLowBalanceThreshold() {
+  const threshold = Number.parseFloat(state.lowBalanceThreshold);
+  return Number.isFinite(threshold) && threshold >= 0 ? threshold : DEFAULT_LOW_BALANCE_THRESHOLD;
 }
 
 function formatCurrency(value) {
