@@ -102,8 +102,6 @@ const splitwiseOweDateInput = document.querySelector("#splitwiseOweDateInput");
 const splitwiseOwedAmountInput = document.querySelector("#splitwiseOwedAmountInput");
 const splitwiseOwedDateInput = document.querySelector("#splitwiseOwedDateInput");
 const periodFilterInput = document.querySelector("#periodFilterInput");
-const categorySortHeader = document.querySelector("#categorySortHeader");
-const categorySortButton = document.querySelector("#categorySortButton");
 const periodSummary = document.querySelector("#periodSummary");
 const treatModeInput = document.querySelector("#treatModeInput");
 const treatEnabledInput = document.querySelector("#treatEnabledInput");
@@ -182,7 +180,6 @@ const aiBetterWhy = document.querySelector("#aiBetterWhy");
 
 let saveStatusTimeout = null;
 let showAllExpenses = false;
-let categorySortDirection = "asc";
 let toastTimeout = null;
 let dailyBarHitAreas = [];
 let lastManualSaveSnapshot = serializeState(state);
@@ -335,14 +332,6 @@ periodFilterInput.addEventListener("input", (event) => {
   state.activePeriod = event.target.value;
   showAllExpenses = false;
   persistAndRefresh(true);
-});
-
-categorySortButton.addEventListener("click", () => {
-  categorySortDirection = categorySortDirection === "asc" ? "desc" : "asc";
-  categorySortHeader.setAttribute("aria-sort", categorySortDirection === "asc" ? "ascending" : "descending");
-  categorySortButton.setAttribute("aria-label", categorySortDirection === "asc" ? "Sort categories Z to A" : "Sort categories A to Z");
-  categorySortButton.title = categorySortDirection === "asc" ? "Sort categories Z to A" : "Sort categories A to Z";
-  renderExpenses();
 });
 
 dailyChartCanvas.addEventListener("mousemove", showDailyChartTooltip);
@@ -860,7 +849,7 @@ function renderExpenses() {
 
   const toRender = (showAllExpenses ? dateSorted : recentRows).sort((a, b) => {
     const comparison = (a.category || "").localeCompare(b.category || "", undefined, { sensitivity: "base" });
-    return categorySortDirection === "asc" ? comparison : -comparison;
+    return comparison;
   });
 
   toRender.forEach((expense) => {
