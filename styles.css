@@ -253,70 +253,11 @@ h2 {
 
 .card-entry {
   display: grid;
-  gap: 16px;
-  padding: 18px;
-  border-radius: 16px;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 20px;
   background: var(--panel-strong);
   border: 1px solid var(--line);
-}
-
-.card-entry-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.card-entry-name {
-  font-family: "Space Grotesk", sans-serif;
-  font-size: 1.05rem;
-}
-
-.card-entry-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
-  align-items: stretch;
-}
-
-.card-entry-grid > label,
-.card-current-balance {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 7px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.42);
-}
-
-.card-field-label {
-  color: var(--muted);
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.card-current-balance .derived-value {
-  font-size: 1.35rem;
-}
-
-.card-entry-grid .field-helper {
-  min-height: 1.1em;
-}
-
-@media (max-width: 700px) {
-  .card-entry-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .card-current-balance {
-    grid-column: span 2;
-    order: -1;
-  }
 }
 
 .add-card-row {
